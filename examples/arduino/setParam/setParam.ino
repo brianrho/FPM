@@ -10,11 +10,12 @@ SoftwareSerial mySerial(2, 3);
 
 FPM finger;
 
+// change baud rate to 57600 assuming the module is already running at 9600 baud
 void setup()  
 {
-  Serial.begin(9600);
+  Serial.begin(57600);
   Serial.println("fingertest");
-  mySerial.begin(57600);
+  mySerial.begin(9600);
   
   if (finger.begin(&mySerial)) {
     Serial.println("Found fingerprint sensor!");
@@ -30,12 +31,12 @@ void setup()
 }
 
 void loop(){
-  uint8_t param = BAUD_RATE; // Change baud rate to 9600
-  uint8_t value = BAUD_9600;
+  uint8_t param = SET_BAUD_RATE; // Change baud rate to 9600
+  uint8_t value = BAUD_57600;
   int p = finger.setParam(param, value);
   switch (p){
     case FINGERPRINT_OK:
-      Serial.println("Baud rate set to 9600 successfully");
+      Serial.println("Baud rate set to 57600 successfully");
       break;
     case FINGERPRINT_PACKETRECIEVEERR:
       Serial.println("Comms error");
