@@ -17,7 +17,7 @@ print()
 def assembleHeader(width, height, depth, cTable=False):
     header = bytearray(54)
     header[0:2] = b'BM'   # bmp signature
-    byte_width = int((depth*width + 31) / 32) + 4
+    byte_width = int((depth*width + 31) / 32) * 4
     if cTable:
         header[2:6] = ((byte_width * height) + (2**depth)*4 + 54).to_bytes(4, byteorder='little')  #file size
     else:
@@ -89,7 +89,7 @@ def getPrint():
         return
     while ser.isOpen():
         try:
-            curr = str(ser.read(), encoding='utf-8')
+            curr = str(ser.read())
             if curr == '\t':
                 print('Extracting image...', end='')
                 for i in range(HALF_BITMAP_SIZE):

@@ -69,14 +69,14 @@
 #define FINGERPRINT_NOFREEINDEX -2
 
 
-// use these when setting system parameters
+// use these constants when setting system parameters with the setParam() method
 enum {
     SET_BAUD_RATE = 4,
     SET_SEC_LEVEL,
     SET_PACKET_LEN
 };
 
-// use these when reading system parameters
+// use these constants when reading system parameters with the readParam() method
 enum {
     STATUS_REG,
     SYSTEM_ID,
@@ -87,11 +87,9 @@ enum {
     BAUD_RATE
 };
 
-const char param_offsets[] = {0, 1, 2, 3, 4, 6, 7};
-const char param_sizes[] = {2, 2, 2, 2, 4, 2, 2};
+// possible values for system parameters that can be set with setPsram() 
 
-// possible values for system parameters that can be set
-
+//baud rates
 enum baud_vals {
     BAUD_9600 = 1,
     BAUD_19200,
@@ -107,6 +105,7 @@ enum baud_vals {
     BAUD_115200
 };
 
+// security levels
 enum sec_levels {
     FRR_1 = 1,
     FRR_2,
@@ -115,20 +114,22 @@ enum sec_levels {
     FRR_5
 };
 
-enum packet_size {
+// packet lengths
+enum packet_length {
     PACKET_32,
     PACKET_64,
     PACKET_128,
     PACKET_256
 };
 
-const uint16_t pLengths[] = {32, 64, 128, 256};
-
-// possible output containers for template/image data
+// possible output containers for template/image data read from the module
 #define STREAM_TYPE 0
 #define ARRAY_TYPE  1
 
+// uncomment to enable debug output
 //#define FINGERPRINT_DEBUG
+
+// default timeout is 200 * 5 ms
 #define DEFAULTTIMEOUT 200
 
 

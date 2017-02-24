@@ -8,6 +8,10 @@
 
 #include "FPM.h"
 
+const char param_offsets[] = {0, 1, 2, 3, 4, 6, 7};
+const char param_sizes[] = {2, 2, 2, 2, 4, 2, 2};
+const uint16_t pLengths[] = {32, 64, 128, 256};
+
 FPM::FPM() {
   thePassword = 0;
   theAddress = 0xFFFFFFFF;
@@ -29,16 +33,16 @@ bool FPM::begin(Stream *ss, uint32_t password, uint32_t address, uint8_t pLen) {
       
     thePassword = password;
     theAddress = address;
-    if (readParam(DB_SIZE, &capacity) != FINGERPRINT_OK)
+    if (readParam(DB_SIZE, &capacity) != FINGERPRINT_OK)        // get the capacity
         return false;
-    if (pLen >= PACKET_32 && pLen <= PACKET_256){
+    if (pLen >= PACKET_32 && pLen <= PACKET_256){               // set the packet length as needed
       if (setParam(SET_PACKET_LEN, pLen) == FINGERPRINT_OK){
           packetLen = pLengths[pLen];
           return true;
       }
     }
     else {
-      if (readParam(PACKET_LEN, &packetLen) == FINGERPRINT_OK){
+      if (readParam(PACKET_LEN, &packetLen) == FINGERPRINT_OK){     // else get the present packet length
           packetLen = pLengths[packetLen];
           return true;
       }
@@ -103,8 +107,8 @@ uint8_t FPM::loadModel(uint16_t id) {
         return -1;
     return buffer[9];
 }
-// NEW: set baud rate, security level or packet size
-// TODO: Update object members like packetLen when they are changed
+
+
 uint8_t FPM::setParam(uint8_t param, uint8_t value){
 	buffer[0] = FINGERPRINT_SETSYSPARAM;
     buffer[1] = param; buffer[2] = value;
