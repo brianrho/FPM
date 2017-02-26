@@ -1,4 +1,4 @@
-# Written by Brian Ejike
+# Written by Brian Ejike (2017)
 # Distributed under the MIT License
 
 import serial, time
@@ -14,6 +14,7 @@ portSettings = ['', 0]
 print("----------Extract Fingerprint Image------------")
 print()
 
+# assemble bmp header for a grayscale image
 def assembleHeader(width, height, depth, cTable=False):
     header = bytearray(54)
     header[0:2] = b'BM'   # bmp signature
@@ -53,15 +54,15 @@ def options():
     return choice
 
 def getSettings():
-    portSettings[0] = input("Enter Arduino Serial port number: ")
-    portSettings[1] = int(input('Enter Serial baud rate: '))
+    portSettings[0] = input("Enter Arduino serial port number: ")
+    portSettings[1] = int(input('Enter serial port baud rate: '))
     print()
     
 def getPrint():
     '''
     First enter the port settings with menu option 1:
-    >>> Enter Arduino Serial port number: COM13
-    >>> Enter Serial baud rate: 57600
+    >>> Enter Arduino serial port number: COM13
+    >>> Enter serial port baud rate: 57600
 
     Then enter the filename of the image with menu option 2: 
     >>> Enter filename/path of output file (without extension): myprints
@@ -77,11 +78,11 @@ def getPrint():
 
     '''
     out = open(input("Enter filename/path of output file (without extension): ")+'.bmp', 'wb')
-    out.write(assembleHeader(WIDTH, HEIGHT, DEPTH, True))
-    for i in range(256):   # set up palette
+    out.write(assembleHeader(WIDTH, HEIGHT, DEPTH, True))  # assemble and write the BMP header to the file
+    for i in range(256):   # write the colour palette
         out.write(i.to_bytes(1,byteorder='little')*4)
     try:
-        ser = serial.Serial(portSettings[0], portSettings[1], timeout=1)
+        ser = serial.Serial(portSettings[0], portSettings[1], timeout=1)  #open the port; timeout is 1 sec; also resets the arduino
     except:
         print('Invalid port settings!')
         print()
@@ -89,24 +90,24 @@ def getPrint():
         return
     while ser.isOpen():
         try:
-            curr = str(ser.read())
-            if curr == '\t':
+            curr = str(ser.read())  # assumes everything recved at first is printable ascii
+            if curr == '\t':   # based on the finger2PC sketch, \t indicates start of the stream; should probably change to some non-ascii char
                 print('Extracting image...', end='')
-                for i in range(HALF_BITMAP_SIZE):
+                for i in range(HALF_BITMAP_SIZE): # start recving 36864 bytes
                     byte = ser.read()
-                    if not byte:
+                    if not byte:  # if we get b'' after the 1 sec timeout period
                         print("Timeout!")
-                        out.close()
+                        out.close()  # close port and file
                         ser.close()
                         return False
-                    out.write((byte[0] & 0xf0).to_bytes(1, byteorder='little') * 2)
-                out.close()
+                    out.write((byte[0]).to_bytes(1, byteorder='little') * 2)  # write the same byte twice; adjacent pixels either have same or close-enough values 
+                out.close()  # close port and file
                 ser.close()
                 print('saved as', out.name)
                 print()
                 return True
             else:
-                print(curr, end='')
+                print(curr, end='')   # print the debug messages from arduino running the finger2PC sketch
         except Exception as e:
             print(e)
             out.close()
