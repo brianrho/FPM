@@ -90,7 +90,7 @@ def getPrint():
         return
     while ser.isOpen():
         try:
-            curr = str(ser.read())  # assumes everything recved at first is printable ascii
+            curr = ser.read().decode()  # assumes everything recved at first is printable ascii
             if curr == '\t':   # based on the finger2PC sketch, \t indicates start of the stream; should probably change to some non-ascii char
                 print('Extracting image...', end='')
                 for i in range(HALF_BITMAP_SIZE): # start recving 36864 bytes
