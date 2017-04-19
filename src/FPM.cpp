@@ -209,7 +209,7 @@ void FPM::writeRaw(uint8_t * data, uint16_t len){
         written += packetLen;
         len -= packetLen;
     }
-    writePacket(theAddress, FINGERPRINT_ENDDATAPACKET, packetLen, &data[written]);
+    writePacket(theAddress, FINGERPRINT_ENDDATAPACKET, len, &data[written]);
 }
 
 //transfer a fingerprint template from Char Buffer 1 to host computer
