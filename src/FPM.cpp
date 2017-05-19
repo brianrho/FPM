@@ -8,9 +8,9 @@
 
 #include "FPM.h"
 
-const char param_offsets[] = {0, 1, 2, 3, 4, 6, 7};
-const char param_sizes[] = {2, 2, 2, 2, 4, 2, 2};
-const uint16_t pLengths[] = {32, 64, 128, 256};
+static const char param_offsets[] = {0, 1, 2, 3, 4, 6, 7};
+static const char param_sizes[] = {2, 2, 2, 2, 4, 2, 2};
+static const uint16_t pLengths[] = {32, 64, 128, 256};
 
 FPM::FPM() {
   thePassword = 0;
