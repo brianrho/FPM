@@ -5,6 +5,8 @@
   Written by Brian Ejike <brianrho94@gmail.com> (2017)
   Distributed under the terms of the MIT license
  ****************************************************/
+#ifndef FPM_H
+#define FPM_H
 
 #if (ARDUINO >= 100)
  #include "Arduino.h"
@@ -61,7 +63,7 @@
 #define FINGERPRINT_SETSYSPARAM	0x0E
 #define FINGERPRINT_READSYSPARAM    0x0F
 #define FINGERPRINT_VERIFYPASSWORD 0x13
-#define FINGERPRINT_HISPEEDSEARCH 0x1B
+#define FINGERPRINT_HISPEEDSEARCH 0x04 //0x1B
 #define FINGERPRINT_TEMPLATECOUNT 0x1D
 #define FINGERPRINT_READTEMPLATEINDEX   0x1F
 #define FINGERPRINT_PAIRMATCH   0x03
@@ -170,3 +172,5 @@ class FPM {
   void writePacket(uint32_t addr, uint8_t packettype, uint16_t len, uint8_t *packet);
   uint16_t getReply(uint8_t * replyBuf=NULL, Stream * outStream = NULL, uint16_t timeout=DEFAULTTIMEOUT);
 };
+
+#endif
