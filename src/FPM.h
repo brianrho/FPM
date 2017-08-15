@@ -121,7 +121,8 @@ enum packet_length {
     PACKET_32,
     PACKET_64,
     PACKET_128,
-    PACKET_256
+    PACKET_256,
+    PACKET_INVALID
 };
 
 // possible output containers for template/image data read from the module
@@ -138,7 +139,7 @@ enum packet_length {
 class FPM {
  public:
   FPM();
-  bool begin(Stream *ss, uint32_t password=0, uint32_t address=0xffffffff, uint8_t packetLen=-1);
+  bool begin(Stream *ss, uint32_t password=0, uint32_t address=0xffffffff, uint8_t packetLen=PACKET_INVALID);
   
   uint8_t getImage(void);
   uint8_t image2Tz(uint8_t slot = 1);

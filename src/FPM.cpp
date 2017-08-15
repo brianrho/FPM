@@ -35,7 +35,7 @@ bool FPM::begin(Stream *ss, uint32_t password, uint32_t address, uint8_t pLen) {
     theAddress = address;
     if (readParam(DB_SIZE, &capacity) != FINGERPRINT_OK)        // get the capacity
         return false;
-    if (pLen >= PACKET_32 && pLen <= PACKET_256){               // set the packet length as needed
+    if (pLen <= PACKET_256){               // set the packet length as needed
       if (setParam(SET_PACKET_LEN, pLen) == FINGERPRINT_OK){
           packetLen = pLengths[pLen];
           return true;
@@ -51,12 +51,12 @@ bool FPM::begin(Stream *ss, uint32_t password, uint32_t address, uint8_t pLen) {
 }
 
 uint8_t FPM::getImage(void) {
-  buffer[0] = {FINGERPRINT_GETIMAGE};
+  buffer[0] = FINGERPRINT_GETIMAGE;
   writePacket(theAddress, FINGERPRINT_COMMANDPACKET, 3, buffer);
   uint16_t len = getReply();
   
   if (buffer[6] != FINGERPRINT_ACKPACKET)
-   return -1;
+   return FINGERPRINT_BADPACKET;
   return buffer[9];
 }
 
@@ -67,7 +67,7 @@ uint8_t FPM::image2Tz(uint8_t slot) {
   uint16_t len = getReply();
 
   if (buffer[6] != FINGERPRINT_ACKPACKET)
-   return -1;
+   return FINGERPRINT_BADPACKET;
   return buffer[9];
 }
 
@@ -78,7 +78,7 @@ uint8_t FPM::createModel(void) {
   uint16_t len = getReply();
   
   if (buffer[6] != FINGERPRINT_ACKPACKET)
-   return -1;
+   return FINGERPRINT_BADPACKET;
   return buffer[9];
 }
 
@@ -91,7 +91,7 @@ uint8_t FPM::storeModel(uint16_t id) {
   uint16_t len = getReply();
   
   if (buffer[6] != FINGERPRINT_ACKPACKET)
-   return -1;
+   return FINGERPRINT_BADPACKET;
   return buffer[9];
 }
     
@@ -104,7 +104,7 @@ uint8_t FPM::loadModel(uint16_t id) {
     uint16_t len = getReply();
     
     if (buffer[6] != FINGERPRINT_ACKPACKET)
-        return -1;
+        return FINGERPRINT_BADPACKET;
     return buffer[9];
 }
 
@@ -116,7 +116,7 @@ uint8_t FPM::setParam(uint8_t param, uint8_t value){
     uint16_t len = getReply();
     
     if (buffer[6] != FINGERPRINT_ACKPACKET)
-        return -1;
+        return FINGERPRINT_BADPACKET;
     if (buffer[9] == FINGERPRINT_OK && param == SET_PACKET_LEN) // update packet length since we need it
         packetLen = pLengths[value];
     return buffer[9];
@@ -135,14 +135,14 @@ uint8_t FPM::readParam(uint8_t param, uint32_t * value){
     uint16_t len = getReply();
     
     if (buffer[6] != FINGERPRINT_ACKPACKET)
-        return -1;
+        return FINGERPRINT_BADPACKET;
     
     *value = 0;
     uint8_t * loc;
     if (buffer[9] == FINGERPRINT_OK){
         loc = &buffer[10] + param_offsets[param]*param_sizes[param];
         for (int i = 0; i < param_sizes[param]; i++){
-            *((byte *)value + i) = *(loc + param_sizes[param] - 1 - i);
+            *((uint8_t *)value + i) = *(loc + param_sizes[param] - 1 - i);
         }
     }      
     return buffer[9];
@@ -155,7 +155,7 @@ uint8_t FPM::downImage(void){
     uint16_t len = getReply();
     
     if (buffer[6] != FINGERPRINT_ACKPACKET)
-        return -1;
+        return FINGERPRINT_BADPACKET;
     return buffer[9];
 }
 
@@ -220,7 +220,7 @@ uint8_t FPM::getModel(void) {
     uint16_t len = getReply();
     
     if (buffer[6] != FINGERPRINT_ACKPACKET)
-        return -1;
+        return FINGERPRINT_BADPACKET;
     return buffer[9];
 }
 
@@ -231,7 +231,7 @@ uint8_t FPM::uploadModel(void){
     uint16_t len = getReply();
     
     if (buffer[6] != FINGERPRINT_ACKPACKET)
-        return -1;
+        return FINGERPRINT_BADPACKET;
     return buffer[9];
 }
     
@@ -243,7 +243,7 @@ uint8_t FPM::deleteModel(uint16_t id, uint16_t num) {
     uint16_t len = getReply();
         
     if (buffer[6] != FINGERPRINT_ACKPACKET)
-        return -1;
+        return FINGERPRINT_BADPACKET;
     return buffer[9];
 }
 
@@ -253,7 +253,7 @@ uint8_t FPM::emptyDatabase(void) {
   uint16_t len = getReply();
   
   if (buffer[6] != FINGERPRINT_ACKPACKET)
-   return -1;
+   return FINGERPRINT_BADPACKET;
   return buffer[9];
 }
 
@@ -269,7 +269,7 @@ uint8_t FPM::fingerFastSearch(void) {
     uint16_t len = getReply();
 
     if (buffer[6] != FINGERPRINT_ACKPACKET)
-        return -1;
+        return FINGERPRINT_BADPACKET;
 
     if (buffer[9] == FINGERPRINT_OK){
         fingerID = buffer[10];
@@ -290,7 +290,7 @@ uint8_t FPM::match_pair(void){
     uint16_t len = getReply();
 
     if (buffer[6] != FINGERPRINT_ACKPACKET)
-        return -1;
+        return FINGERPRINT_BADPACKET;
     
     if (buffer[9] == FINGERPRINT_OK){
         confidence = buffer[10]; 
@@ -309,7 +309,7 @@ uint8_t FPM::getTemplateCount(void) {
     uint16_t len = getReply();
 
     if (buffer[6] != FINGERPRINT_ACKPACKET)
-        return -1;
+        return FINGERPRINT_BADPACKET;
     
     if (buffer[9] == FINGERPRINT_OK){
         templateCount = buffer[10];
@@ -327,7 +327,7 @@ uint8_t FPM::getFreeIndex(uint8_t page, int16_t * id){
     uint16_t len = getReply();
     
     if (buffer[6] != FINGERPRINT_ACKPACKET)
-        return -1;
+        return FINGERPRINT_BADPACKET;
     if (buffer[9] == FINGERPRINT_OK){
         for (int i = 0; i < len; i++){
             if (buffer[10+i] < 0xff){
