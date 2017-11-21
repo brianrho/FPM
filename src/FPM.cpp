@@ -17,6 +17,9 @@ FPM::FPM() {
   theAddress = 0xFFFFFFFF;
   packetLen = 32;
   capacity = 0;
+  fingerID = 0xffff;
+  confidence = 0xffff;
+  templateCount = 0;
 }
 
 bool FPM::begin(Stream *ss, uint32_t password, uint32_t address, uint8_t pLen) {
