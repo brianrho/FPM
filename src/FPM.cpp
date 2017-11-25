@@ -8,8 +8,8 @@
 
 #include "FPM.h"
 
-static const char param_offsets[] = {0, 1, 2, 3, 4, 6, 7};
-static const char param_sizes[] = {2, 2, 2, 2, 4, 2, 2};
+static const uint8_t param_offsets[] = {0, 1, 2, 3, 4, 6, 7};
+static const uint8_t param_sizes[] = {2, 2, 2, 2, 4, 2, 2};
 static const uint16_t pLengths[] = {32, 64, 128, 256};
 
 FPM::FPM() {
@@ -24,6 +24,7 @@ FPM::FPM() {
 
 bool FPM::begin(Stream *ss, uint32_t password, uint32_t address, uint8_t pLen) {
     mySerial = ss;
+    delay(1000);            // 500 ms at least according to datasheet
     
     buffer[0] = FINGERPRINT_VERIFYPASSWORD;
     buffer[1] = thePassword >> 24; buffer[2] = thePassword >> 16;
@@ -182,9 +183,9 @@ bool FPM::readRaw(void * out, uint8_t outType, bool * lastPacket, uint16_t * buf
     
     uint16_t len;
     if (outType == ARRAY_TYPE)
-        len = getReply(chunk);
+        len = getReply(chunk, NULL, packetLen + 12);
     else if (outType == STREAM_TYPE)
-        len = getReply(chunk, outStream);
+        len = getReply(chunk, outStream, packetLen + 12);
     
     if (len != packetLen){
         return false;
@@ -420,8 +421,7 @@ void FPM::writePacket(uint32_t addr, uint8_t packettype,
 #endif
 }
 
-//MODIFIED: adjusted to allow for image download
-uint16_t FPM::getReply(uint8_t * replyBuf, Stream * outStream, uint16_t timeout) {
+uint16_t FPM::getReply(uint8_t * replyBuf, Stream * outStream, uint16_t blen, uint16_t timeout) {
   uint8_t idx, val, *packet;
   uint8_t bytes = 0;
   uint16_t timer = 0;
@@ -431,6 +431,8 @@ uint16_t FPM::getReply(uint8_t * replyBuf, Stream * outStream, uint16_t timeout)
       packet = replyBuf;
   else
       packet = buffer;
+  
+  memset(packet, 0xff, blen);
   
   idx = 0;
 #ifdef FINGERPRINT_DEBUG
@@ -450,11 +452,17 @@ while (true) {
     if (idx > 8 && outStream != NULL){
         outStream->write(val);
     }
-    else
+    else {
+        if (blen == 0)
+            return 0;
         packet[idx] = val;
+        blen--;
+    }
 
-    if ((idx == 0) && (packet[0] != (FINGERPRINT_STARTCODE >> 8)))
-      continue;
+    if ((idx == 0) && (packet[0] != (FINGERPRINT_STARTCODE >> 8))) {
+        blen++;
+        continue;
+    }
     
 #ifdef FINGERPRINT_DEBUG
     Serial.print(" 0x"); Serial.print(packet[idx], HEX);

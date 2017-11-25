@@ -70,6 +70,9 @@
 
 #define FINGERPRINT_NOFREEINDEX -2
 
+#define FPM_MAX_PKT_LEN         32
+#define FPM_PKT_OVERHEAD_LEN    12
+#define FPM_BUFFER_SZ           FPM_MAX_PKT_LEN + FPM_PKT_OVERHEAD_LEN
 
 // use these constants when setting system parameters with the setParam() method
 enum {
@@ -165,13 +168,13 @@ class FPM {
   uint16_t fingerID, confidence, templateCount, packetLen, capacity;
 
  private: 
-  uint8_t buffer[32+12];
+  uint8_t buffer[FPM_BUFFER_SZ];
   uint32_t thePassword;
   uint32_t theAddress;
   Stream * mySerial;
   
   void writePacket(uint32_t addr, uint8_t packettype, uint16_t len, uint8_t *packet);
-  uint16_t getReply(uint8_t * replyBuf=NULL, Stream * outStream = NULL, uint16_t timeout=DEFAULTTIMEOUT);
+  uint16_t getReply(uint8_t * replyBuf=NULL, Stream * outStream = NULL, uint16_t blen = FPM_BUFFER_SZ, uint16_t timeout=DEFAULTTIMEOUT);
 };
 
 #endif
