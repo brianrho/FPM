@@ -27,8 +27,8 @@ bool FPM::begin(Stream *ss, uint32_t password, uint32_t address, uint8_t pLen) {
     delay(1000);            // 500 ms at least according to datasheet
     
     buffer[0] = FINGERPRINT_VERIFYPASSWORD;
-    buffer[1] = thePassword >> 24; buffer[2] = thePassword >> 16;
-    buffer[3] = thePassword >> 8; buffer[4] = thePassword;
+    buffer[1] = (thePassword >> 24) & 0xff; buffer[2] = (thePassword >> 16) & 0xff;
+    buffer[3] = (thePassword >> 8) & 0xff; buffer[4] = thePassword & 0xff;
     writePacket(theAddress, FINGERPRINT_COMMANDPACKET, 7, buffer);
     uint16_t len = getReply();
 
@@ -52,6 +52,18 @@ bool FPM::begin(Stream *ss, uint32_t password, uint32_t address, uint8_t pLen) {
       }
     }
     return false;
+}
+
+uint8_t FPM::setPassword(uint32_t pwd) {
+    buffer[0] = FINGERPRINT_SETPASSWORD;
+    buffer[1] = (pwd >> 24) & 0xff; buffer[2] = (pwd >> 16) & 0xff;
+    buffer[3] = (pwd >> 8) & 0xff; buffer[4] = pwd & 0xff;
+    writePacket(theAddress, FINGERPRINT_COMMANDPACKET, 7, buffer);
+    uint16_t len = getReply();
+
+    if (buffer[6] != FINGERPRINT_ACKPACKET)
+        return FINGERPRINT_BADPACKET;
+    return buffer[9];
 }
 
 uint8_t FPM::getImage(void) {
@@ -481,7 +493,7 @@ while (true) {
     idx++;
     if (idx < len + 9)
         continue;
-    else{
+    else {
         mySerial->read();   // read off checksum if its arrived, to free up buffer space
         mySerial->read();
         return len;

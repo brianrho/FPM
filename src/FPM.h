@@ -67,6 +67,7 @@
 #define FINGERPRINT_TEMPLATECOUNT 0x1D
 #define FINGERPRINT_READTEMPLATEINDEX   0x1F
 #define FINGERPRINT_PAIRMATCH   0x03
+#define FINGERPRINT_SETPASSWORD     0x12
 
 #define FINGERPRINT_NOFREEINDEX -2
 
@@ -164,6 +165,7 @@ class FPM {
   uint8_t getTemplateCount(void);
   uint8_t getFreeIndex(uint8_t page, int16_t * id);
   uint8_t match_pair(void);
+  uint8_t setPassword(uint32_t pwd);
 
   uint16_t fingerID, confidence, templateCount, packetLen, capacity;
 
