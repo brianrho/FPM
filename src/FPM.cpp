@@ -26,6 +26,9 @@ bool FPM::begin(Stream *ss, uint32_t password, uint32_t address, uint8_t pLen) {
     mySerial = ss;
     delay(1000);            // 500 ms at least according to datasheet
     
+    theAddress = address;
+    thePassword = password;
+    
     buffer[0] = FINGERPRINT_VERIFYPASSWORD;
     buffer[1] = (thePassword >> 24) & 0xff; buffer[2] = (thePassword >> 16) & 0xff;
     buffer[3] = (thePassword >> 8) & 0xff; buffer[4] = thePassword & 0xff;
@@ -34,9 +37,7 @@ bool FPM::begin(Stream *ss, uint32_t password, uint32_t address, uint8_t pLen) {
 
     if ((len != 1) || (buffer[6] != FINGERPRINT_ACKPACKET) || (buffer[9] != FINGERPRINT_OK))
       return false;
-      
-    thePassword = password;
-    theAddress = address;
+
     if (readParam(DB_SIZE, &capacity) != FINGERPRINT_OK)        // get the capacity
         return false;
     if (pLen <= PACKET_256){               // set the packet length as needed
@@ -276,11 +277,11 @@ uint8_t FPM::emptyDatabase(void) {
 uint8_t FPM::fingerFastSearch(void) {
     fingerID = 0xFFFF;
     confidence = 0xFFFF;
-    // high speed search of slot #1 starting at page 0x0000 and page #0x0671 
+    // high speed search of slot #1 starting at page 0 to 'capacity'
     buffer[0] = FINGERPRINT_HISPEEDSEARCH;
     buffer[1] = 0x01;
     buffer[2] = 0x00; buffer[3] = 0x00;
-    buffer[4] = capacity >> 8; buffer[5] = capacity & 0xFF;
+    buffer[4] = (uint8_t)(capacity >> 8); buffer[5] = (uint8_t)(capacity & 0xFF);
     writePacket(theAddress, FINGERPRINT_COMMANDPACKET, 8, buffer);
     uint16_t len = getReply();
 
@@ -350,7 +351,7 @@ uint8_t FPM::getFreeIndex(uint8_t page, int16_t * id){
                 uint8_t index = 0;
                 for (uint8_t bit = 0x01; bit != 0; bit <<= 1){
                     if ((bit & buffer[10+i]) == 0){
-                        *id = (256 * page) + (i * 8) + index;
+                        *id = (FPM_TEMPLATES_PER_PAGE * page) + (i * 8) + index;
                         return buffer[9];
                     }
                     index++;

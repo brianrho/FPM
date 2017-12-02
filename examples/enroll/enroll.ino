@@ -2,10 +2,7 @@
 #include <FPM.h>
 //Enroll fingerprints with this example
 
-#define TEMPLATES_PER_PAGE  256
-
 int getFingerprintEnroll(int id);
-
 
 // pin #2 is IN from sensor (GREEN wire)
 // pin #3 is OUT from arduino  (WHITE/YELLOW wire)
@@ -44,7 +41,7 @@ void loop()                     // run over and over again
 
 bool get_free_id(int16_t * id){
   int p = -1;
-  for (int page = 0; page < (finger.capacity / TEMPLATES_PER_PAGE) + 1; page++){
+  for (int page = 0; page < (finger.capacity / FPM_TEMPLATES_PER_PAGE) + 1; page++){
     p = finger.getFreeIndex(page, id);
     switch (p){
       case FINGERPRINT_OK:

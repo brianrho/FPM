@@ -138,7 +138,7 @@ enum packet_length {
 
 // default timeout is 200 * 5 ms
 #define DEFAULTTIMEOUT 200
-
+#define FPM_TEMPLATES_PER_PAGE  256
 
 class FPM {
  public:
