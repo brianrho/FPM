@@ -31,7 +31,7 @@ def assembleHeader(width, height, depth, cTable=False):
 
     header[14:18] = (40).to_bytes(4, byteorder='little')    #header size
     header[18:22] = width.to_bytes(4, byteorder='little') #width
-    header[22:26] = height.to_bytes(4, byteorder='little') #height
+    header[22:26] = (-height).to_bytes(4, byteorder='little', signed=True) #height
     header[26:28] = (1).to_bytes(2, byteorder='little') #no of planes
     header[28:30] = depth.to_bytes(2, byteorder='little') #depth
     #header[30:34] = (0).to_bytes(4, byteorder='little')
