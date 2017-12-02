@@ -19,7 +19,7 @@ void setup()
     Serial.print("Packet length: "); Serial.println(finger.packetLen);
   } else {
     Serial.println("Did not find fingerprint sensor :(");
-    while (1);
+    while (1) yield();
   }
 
   sendtoPC();
@@ -54,6 +54,7 @@ void sendtoPC(){
         Serial.println("Unknown error");
         break;
     }
+    yield();
   }
 
   p = finger.downImage();
@@ -85,6 +86,7 @@ void sendtoPC(){
       Serial.println(count);
       return;
     }
+    yield();
   }
   Serial.print(count * finger.packetLen); Serial.println(" bytes read");
   Serial.println("Image stream complete");

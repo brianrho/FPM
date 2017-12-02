@@ -2,6 +2,10 @@
 #include <FPM.h>
 
 #define BUFF_SZ 512
+
+#define TEMPLATE_TO_MOVE            4
+#define NEW_TEMPLATE_LOCATION       8
+
 // Download a template, delete it, print it, and upload it to a different flash location
 
 // pin #2 is IN from sensor (GREEN wire)
@@ -22,15 +26,15 @@ void setup()
     Serial.print("Packet length: "); Serial.println(finger.packetLen);
   } else {
     Serial.println("Did not find fingerprint sensor :(");
-    while (1);
+    while (1) yield();
   }
   Serial.println("Send any character to continue...");
   
-  while (Serial.available() == 0);
+  while (Serial.available() == 0) yield();
   
-  getTemplate(4);  // download template at #4 (if it exists) to the buffer; first enroll a finger at that location
-  deleteTemplate(4); // delete template at #4
-  sendTemplate(8);   // upload template in buffer to #8; run fingerprint match example to verify that the new template is now at #8
+  getTemplate(TEMPLATE_TO_MOVE);  // download template at #4 (if it exists) to the buffer; first enroll a finger at that location
+  deleteTemplate(TEMPLATE_TO_MOVE); // delete template at #4
+  sendTemplate(NEW_TEMPLATE_LOCATION);   // upload template in buffer to #8; run fingerprint match example to verify that the new template is now at #8
 }
 
 void loop()
@@ -42,7 +46,7 @@ uint8_t buff[BUFF_SZ];
 
 void getTemplate(uint16_t id)
 {
- uint8_t p = finger.loadModel(id);
+  uint8_t p = finger.loadModel(id);
   switch (p) {
     case FINGERPRINT_OK:
       Serial.print("template "); Serial.print(id); Serial.println(" loaded");
@@ -84,6 +88,7 @@ void getTemplate(uint16_t id)
       Serial.println("Error receiving packet");
       return;
     }
+    yield();
   }
 
   Serial.println("---------------------------------------------");
@@ -93,6 +98,7 @@ void getTemplate(uint16_t id)
       Serial.print(" ");
     }
     Serial.println();
+    yield();
   }
   Serial.println("--------------------------------------------");
 
@@ -137,6 +143,7 @@ void sendTemplate(uint16_t id){
       return;
   }
 
+  yield();
   finger.writeRaw(buff, BUFF_SZ);
 
   p = finger.storeModel(id);

@@ -22,14 +22,14 @@ void setup()
     Serial.print("Packet length: "); Serial.println(finger.packetLen);
   } else {
     Serial.println("Did not find fingerprint sensor :(");
-    while (1);
+    while (1) yield();
   }
 }
 
 void loop()                     // run over and over again
 {
   Serial.println("Send any character to enroll a finger...");
-  while (Serial.available() == 0);
+  while (Serial.available() == 0) yield();
   Serial.println("Searching for a free slot to store the template...");
   int16_t id;
   if (get_free_id(&id))
@@ -57,6 +57,7 @@ bool get_free_id(int16_t * id){
         Serial.println("Unknown error!");
         return false;
     }
+    yield();
   }
 }
 
@@ -82,6 +83,7 @@ int getFingerprintEnroll(int id) {
       Serial.println("Unknown error");
       break;
     }
+    yield();
   }
   // OK success!
 
@@ -112,6 +114,7 @@ int getFingerprintEnroll(int id) {
   p = 0;
   while (p != FINGERPRINT_NOFINGER) {
     p = finger.getImage();
+    yield();
   }
 
   p = -1;
@@ -135,6 +138,7 @@ int getFingerprintEnroll(int id) {
       Serial.println("Unknown error");
       break;
     }
+    yield();
   }
 
   // OK success!

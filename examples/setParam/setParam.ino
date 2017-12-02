@@ -23,14 +23,12 @@ void setup()
     Serial.print("Packet length: "); Serial.println(finger.packetLen);
   } else {
     Serial.println("Did not find fingerprint sensor :(");
-    while (1);
+    while (1) yield();
   }
 
   Serial.println("Send any character to continue...");
-  while (Serial.available() == 0);
-}
-
-void loop(){
+  while (Serial.available() == 0) yield();
+  
   uint8_t param = SET_BAUD_RATE; // Change baud rate to 9600
   uint8_t value = BAUD_57600;
   int p = finger.setParam(param, value);
@@ -52,7 +50,10 @@ void loop(){
   mySerial.begin(57600);
   int16_t id;     // just test any command to see if the change was successful
   get_free_id(&id);
-  while (1);
+}
+
+void loop(){
+  
 }
 
 bool get_free_id(int16_t * id){

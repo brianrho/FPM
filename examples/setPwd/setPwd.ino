@@ -23,13 +23,24 @@ void setup()
     Serial.print("Packet length: "); Serial.println(finger.packetLen);
   } else {
     Serial.println("Did not find fingerprint sensor :(");
-    while (1);
+    while (1) yield();
   }
   while (Serial.read() != -1);    // clear buffer
 
   Serial.print("Send any character to set the module password to 0x"); Serial.println(new_password, HEX);
-  while (Serial.available() == 0);
-  set_pwd(new_password);
+  while (Serial.available() == 0) yield();
+  if (set_pwd(new_password)) {
+    delay(1000);
+    Serial.println("Testing new password by calling begin() again");
+    if (finger.begin(&mySerial, new_password)) {
+      Serial.println("Found fingerprint sensor!");
+      Serial.print("Capacity: "); Serial.println(finger.capacity);
+      Serial.print("Packet length: "); Serial.println(finger.packetLen);
+    } else {
+      Serial.println("Did not find fingerprint sensor :(");
+      while (1) yield();
+    }
+  }
 }
 
 void loop()                    
@@ -37,15 +48,16 @@ void loop()
   
 }
 
-void set_pwd(uint32_t pwd) {
+bool set_pwd(uint32_t pwd) {
   uint8_t ret = finger.setPassword(pwd);
   switch (ret) {
     case FINGERPRINT_OK:
-      Serial.println("Password changed successfully. Will take hold after next power cycle.");
+      Serial.println("Password changed successfully. Will take hold next time you call begin().");
       break;
     case FINGERPRINT_PACKETRECIEVEERR:
       Serial.println("Comms error!");
       break;
   }
+  return (ret == FINGERPRINT_OK);
 }
 

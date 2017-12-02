@@ -19,7 +19,7 @@ void setup()
     Serial.print("Packet length: "); Serial.println(finger.packetLen);
   } else {
     Serial.println("Did not find fingerprint sensor :(");
-    while (1);
+    while (1) yield();
   }
 }
 
@@ -28,17 +28,18 @@ void loop()                     // run over and over again
   Serial.println("Type in the ID # you want to delete...");
   int id = 0;
   while (true) {
-    while (! Serial.available());
+    while (! Serial.available()) yield();
     char c = Serial.read();
     if (! isdigit(c)) break;
     id *= 10;
     id += c - '0';
+    yield();
   }
   Serial.print("Deleting ID #");
   Serial.println(id);
   
   deleteFingerprint(id);
-  while (Serial.read() != -1);
+  while (Serial.read() != -1) yield();
 }
 
 int deleteFingerprint(int id) {

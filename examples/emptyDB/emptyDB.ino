@@ -21,14 +21,10 @@ void setup()
     Serial.print("Packet length: "); Serial.println(finger.packetLen);
   } else {
     Serial.println("Did not find fingerprint sensor :(");
-    while (1);
+    while (1) yield();
   }
-}
-
-void loop() {
-  int p = -1;
-  while (p != FINGERPRINT_OK){
-    p = finger.emptyDatabase();
+  
+    uint8_t p = finger.emptyDatabase();
     if (p == FINGERPRINT_OK){
       Serial.println("Database empty!");
     }
@@ -38,6 +34,8 @@ void loop() {
     else if (p == FINGERPRINT_DBCLEARFAIL) {
       Serial.println("Could not clear database!");
     }
-  }
-  while (1);
+}
+
+void loop() {
+    
 }

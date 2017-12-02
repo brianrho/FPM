@@ -21,14 +21,13 @@ void setup()
     Serial.print("Packet length: "); Serial.println(finger.packetLen);
   } else {
     Serial.println("Did not find fingerprint sensor :(");
-    while (1);
+    while (1) yield();
   }
 }
 
 void loop()                     // run over and over again
 {
   getFingerprintID();
-  delay(50);            //don't ned to run this at full speed.
 }
 
 int getFingerprintID() {
@@ -53,6 +52,7 @@ int getFingerprintID() {
         Serial.println("Unknown error");
         break;
     }
+    yield();
   }
 
   // OK success!
@@ -82,6 +82,7 @@ int getFingerprintID() {
   Serial.println("Remove finger...");
   while (p != FINGERPRINT_NOFINGER){
     p = finger.getImage();
+    yield();
   }
   Serial.println();
   // OK converted!
