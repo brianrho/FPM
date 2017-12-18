@@ -77,6 +77,36 @@ uint8_t FPM::getImage(void) {
   return buffer[9];
 }
 
+uint8_t FPM::getImageNL(void) {
+  buffer[0] = FINGERPRINT_GETIMAGE_NOLIGHT;
+  writePacket(theAddress, FINGERPRINT_COMMANDPACKET, 3, buffer);
+  uint16_t len = getReply();
+  
+  if (buffer[6] != FINGERPRINT_ACKPACKET)
+   return FINGERPRINT_BADPACKET;
+  return buffer[9];
+}
+
+uint8_t FPM::led_on(void) {
+    buffer[0] = FINGERPRINT_LEDON;
+    writePacket(theAddress, FINGERPRINT_COMMANDPACKET, 3, buffer);
+    uint16_t len = getReply();
+
+    if (buffer[6] != FINGERPRINT_ACKPACKET)
+        return FINGERPRINT_BADPACKET;
+    return buffer[9];
+}
+
+uint8_t FPM::led_off(void) {
+    buffer[0] = FINGERPRINT_LEDOFF;
+    writePacket(theAddress, FINGERPRINT_COMMANDPACKET, 3, buffer);
+    uint16_t len = getReply();
+
+    if (buffer[6] != FINGERPRINT_ACKPACKET)
+        return FINGERPRINT_BADPACKET;
+    return buffer[9];
+}
+
 uint8_t FPM::image2Tz(uint8_t slot) {
   buffer[0] = FINGERPRINT_IMAGE2TZ; 
   buffer[1] = slot;

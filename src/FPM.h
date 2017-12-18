@@ -69,7 +69,12 @@
 #define FINGERPRINT_PAIRMATCH   0x03
 #define FINGERPRINT_SETPASSWORD     0x12
 
+#define FINGERPRINT_LEDON       0x50
+#define FINGERPRINT_LEDOFF       0x51
+#define FINGERPRINT_GETIMAGE_NOLIGHT 0x52
+
 #define FINGERPRINT_NOFREEINDEX -2
+
 
 #define FPM_MAX_PKT_LEN         32
 #define FPM_PKT_OVERHEAD_LEN    12
@@ -141,42 +146,45 @@ enum packet_length {
 #define FPM_TEMPLATES_PER_PAGE  256
 
 class FPM {
- public:
-  FPM();
-  bool begin(Stream *ss, uint32_t password=0, uint32_t address=0xffffffff, uint8_t packetLen=PACKET_INVALID);
-  
-  uint8_t getImage(void);
-  uint8_t image2Tz(uint8_t slot = 1);
-  uint8_t createModel(void);
+    public:
+        FPM();
+        bool begin(Stream *ss, uint32_t password=0, uint32_t address=0xffffffff, uint8_t packetLen=PACKET_INVALID);
 
-  uint8_t emptyDatabase(void);
-  uint8_t storeModel(uint16_t id);
-  uint8_t loadModel(uint16_t id);
-  uint8_t setParam(uint8_t param, uint8_t value);
-  uint8_t readParam(uint8_t param, uint16_t * value);
-  uint8_t readParam(uint8_t param, uint32_t * value);
-  uint8_t downImage(void);
-  bool readRaw(void * out, uint8_t outType, bool * lastPacket, uint16_t * bufLen=NULL);
-  void writeRaw(uint8_t * data, uint16_t len);
-  uint8_t getModel(void);
-  uint8_t uploadModel(void);
-  uint8_t deleteModel(uint16_t id, uint16_t num=1);
-  uint8_t fingerFastSearch(void);
-  uint8_t getTemplateCount(void);
-  uint8_t getFreeIndex(uint8_t page, int16_t * id);
-  uint8_t match_pair(void);
-  uint8_t setPassword(uint32_t pwd);
+        uint8_t getImage(void);
+        uint8_t getImageNL(void);
+        uint8_t image2Tz(uint8_t slot = 1);
+        uint8_t createModel(void);
 
-  uint16_t fingerID, confidence, templateCount, packetLen, capacity;
+        uint8_t emptyDatabase(void);
+        uint8_t storeModel(uint16_t id);
+        uint8_t loadModel(uint16_t id);
+        uint8_t setParam(uint8_t param, uint8_t value);
+        uint8_t readParam(uint8_t param, uint16_t * value);
+        uint8_t readParam(uint8_t param, uint32_t * value);
+        uint8_t downImage(void);
+        bool readRaw(void * out, uint8_t outType, bool * lastPacket, uint16_t * bufLen=NULL);
+        void writeRaw(uint8_t * data, uint16_t len);
+        uint8_t getModel(void);
+        uint8_t uploadModel(void);
+        uint8_t deleteModel(uint16_t id, uint16_t num=1);
+        uint8_t fingerFastSearch(void);
+        uint8_t getTemplateCount(void);
+        uint8_t getFreeIndex(uint8_t page, int16_t * id);
+        uint8_t match_pair(void);
+        uint8_t setPassword(uint32_t pwd);
 
- private: 
-  uint8_t buffer[FPM_BUFFER_SZ];
-  uint32_t thePassword;
-  uint32_t theAddress;
-  Stream * mySerial;
-  
-  void writePacket(uint32_t addr, uint8_t packettype, uint16_t len, uint8_t *packet);
-  uint16_t getReply(uint8_t * replyBuf=NULL, Stream * outStream = NULL, uint16_t blen = FPM_BUFFER_SZ, uint16_t timeout=DEFAULTTIMEOUT);
+        uint8_t led_on(void);
+        uint8_t led_off(void);
+        uint16_t fingerID, confidence, templateCount, packetLen, capacity;
+
+    private: 
+        uint8_t buffer[FPM_BUFFER_SZ];
+        uint32_t thePassword;
+        uint32_t theAddress;
+        Stream * mySerial;
+
+        void writePacket(uint32_t addr, uint8_t packettype, uint16_t len, uint8_t *packet);
+        uint16_t getReply(uint8_t * replyBuf=NULL, Stream * outStream = NULL, uint16_t blen = FPM_BUFFER_SZ, uint16_t timeout=DEFAULTTIMEOUT);
 };
 
 #endif
