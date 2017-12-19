@@ -1,6 +1,7 @@
 #include <SoftwareSerial.h>
 #include <FPM.h>
 //Enroll fingerprints with this example; use led_on() and led_off() to control the built-in LED; getImageNL() takes an image without controlling the LED (as opposed to getImage())
+// only confirmed to work for ZFM60 modules
 
 int getFingerprintEnroll(int id);
 

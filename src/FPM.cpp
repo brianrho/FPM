@@ -77,6 +77,7 @@ uint8_t FPM::getImage(void) {
   return buffer[9];
 }
 
+// for ZFM60 modules
 uint8_t FPM::getImageNL(void) {
   buffer[0] = FINGERPRINT_GETIMAGE_NOLIGHT;
   writePacket(theAddress, FINGERPRINT_COMMANDPACKET, 3, buffer);
@@ -87,6 +88,7 @@ uint8_t FPM::getImageNL(void) {
   return buffer[9];
 }
 
+// for ZFM60 modules
 uint8_t FPM::led_on(void) {
     buffer[0] = FINGERPRINT_LEDON;
     writePacket(theAddress, FINGERPRINT_COMMANDPACKET, 3, buffer);
@@ -97,6 +99,7 @@ uint8_t FPM::led_on(void) {
     return buffer[9];
 }
 
+// for ZFM60 modules
 uint8_t FPM::led_off(void) {
     buffer[0] = FINGERPRINT_LEDOFF;
     writePacket(theAddress, FINGERPRINT_COMMANDPACKET, 3, buffer);
