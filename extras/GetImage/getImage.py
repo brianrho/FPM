@@ -109,7 +109,12 @@ def getPrint():
             else:
                 print(curr, end='')   # print the debug messages from arduino running the finger2PC sketch
         except Exception as e:
-            print(e)
+            print("ERROR: ", e)
+            out.close()
+            ser.close()
+            return False
+        except KeyboardInterrupt:
+            print("Closing port.")
             out.close()
             ser.close()
             return False
