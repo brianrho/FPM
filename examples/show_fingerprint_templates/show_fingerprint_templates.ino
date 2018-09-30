@@ -1,7 +1,7 @@
 #include <SoftwareSerial.h>
 #include <FPM.h>
 
-#define BUFF_SZ 512
+#define BUFF_SZ         512
 
 #define TEMPLATE_TO_MOVE            4
 #define NEW_TEMPLATE_LOCATION       8
@@ -72,7 +72,7 @@ void getTemplate(uint16_t id)
   
   bool last;
   int count = 0;
-  uint16_t buflen = 512;
+  uint16_t buflen = BUFF_SZ;
   uint16_t pos = 0;
   
   while (true){

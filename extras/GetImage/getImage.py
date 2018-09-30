@@ -83,7 +83,7 @@ def getPrint():
         out.write(i.to_bytes(1,byteorder='little')*4)
     try:
         ser = serial.Serial(portSettings[0], portSettings[1], timeout=1)  #open the port; timeout is 1 sec; also resets the arduino
-    except:
+    except Exception:
         print('Invalid port settings!')
         print()
         out.close()
