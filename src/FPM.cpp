@@ -295,6 +295,8 @@ bool FPM::readRaw(uint8_t outType, void * out, bool * read_complete, uint16_t * 
     
     /* check the length */
     if (len != chunk_sz) {
+        FPM_DEBUG_PRINT("Read data failed: ");
+        FPM_DEBUG_PRINTLN(len);
         return false;
     }
     
