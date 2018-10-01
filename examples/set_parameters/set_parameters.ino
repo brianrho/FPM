@@ -63,7 +63,7 @@ void change_baud_rate(void) {
 
 void loop() {
     while (Serial.read() != -1);
-    Serial.println("Send any character to continue...");
+    Serial.println("Send any character to change the module baud rate...");
     while (Serial.available() == 0) yield();
     change_baud_rate();
     while (Serial.read() != -1);
