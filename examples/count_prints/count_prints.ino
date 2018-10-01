@@ -31,7 +31,7 @@ void setup()
 
 void loop() {
     while (Serial.read() != -1);
-    Serial.print("Send any character to get the number of stored templates...");
+    Serial.println("Send any character to get the number of stored templates...");
     while (Serial.available() == 0) yield();
 
     uint16_t template_cnt;

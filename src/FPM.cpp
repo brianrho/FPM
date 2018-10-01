@@ -248,14 +248,7 @@ int16_t FPM::readParams(FPM_System_Params * user_params) {
     
     if (user_params != NULL)
         memcpy(user_params, &sys_params, 16);
-    /*value = 0;
-    uint8_t * loc;
-    if (buffer[9] == FPM_OK){
-        loc = &buffer[1] + param_offsets[param]*param_sizes[param];
-        for (int i = 0; i < param_sizes[param]; i++){
-            *((uint8_t *)value + i) = *(loc + param_sizes[param] - 1 - i);
-        }
-    } */     
+    
     return confirm_code;
 }
 
