@@ -70,6 +70,7 @@
 #define FPM_LEDON                   0x50
 #define FPM_LEDOFF                  0x51
 #define FPM_GETIMAGE_NOLIGHT        0x52
+#define FPM_GETRANDOM               0x14
 
 /* returned whenever we time out while reading */
 #define FPM_TIMEOUT                 -1
@@ -81,10 +82,10 @@
 #define FPM_MAX_PACKET_LEN          256
 #define FPM_PKT_OVERHEAD_LEN        12
 
-/* 32 is max 'normal' packet length, +1 for confirmation code */
+/* 32 is max packet length for ACKed commands, +1 for confirmation code */
 #define FPM_BUFFER_SZ               (32 + 1)
 
-/* default timeout is 200 * 5 ms */
+/* default timeout is 1 second */
 #define FPM_DEFAULT_TIMEOUT         1000
 #define FPM_TEMPLATES_PER_PAGE      256
 
@@ -176,6 +177,7 @@ class FPM {
         int16_t getFreeIndex(uint8_t page, int16_t * id);
         int16_t matchTemplatePair(uint16_t * score);
         int16_t setPassword(uint32_t pwd);
+        int16_t getRandomNumber(uint32_t * number);
 
         int16_t led_on(void);
         int16_t led_off(void);

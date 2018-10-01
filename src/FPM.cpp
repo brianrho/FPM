@@ -312,7 +312,7 @@ bool FPM::readRaw(uint8_t outType, void * out, bool * read_complete, uint16_t * 
     return false;
 }
 
-void FPM::writeRaw(uint8_t * data, uint16_t len){
+void FPM::writeRaw(uint8_t * data, uint16_t len) {
     uint16_t written = 0;
     uint16_t chunk_sz = fpm_packet_lengths[sys_params.packet_len];
     
@@ -410,7 +410,7 @@ int16_t FPM::fingerFastSearch(uint16_t * finger_id, uint16_t * score, uint8_t sl
     return confirm_code;
 }
 
-int16_t FPM::matchTemplatePair(uint16_t * score){
+int16_t FPM::matchTemplatePair(uint16_t * score) {
     buffer[0] = FPM_PAIRMATCH;
     writePacket(FPM_COMMANDPACKET, buffer, 1);
     uint8_t confirm_code = 0;
@@ -456,7 +456,7 @@ int16_t FPM::getTemplateCount(uint16_t * template_cnt) {
     return confirm_code;
 }
 
-int16_t FPM::getFreeIndex(uint8_t page, int16_t * id){
+int16_t FPM::getFreeIndex(uint8_t page, int16_t * id) {
     buffer[0] = FPM_READTEMPLATEINDEX; 
     buffer[1] = page;
     
@@ -487,6 +487,33 @@ int16_t FPM::getFreeIndex(uint8_t page, int16_t * id){
     }
     
     *id = FPM_NOFREEINDEX;  // no free space found
+    return confirm_code;
+}
+
+int16_t FPM::getRandomNumber(uint32_t * number) {
+    buffer[0] = FPM_GETRANDOM;
+    writePacket(FPM_COMMANDPACKET, buffer, 1);
+    uint8_t confirm_code = 0;
+    
+    int16_t len = read_ack_get_response(&confirm_code);
+    
+    if (len < 0)
+        return len;
+    
+    if (confirm_code != FPM_OK)
+        return confirm_code;
+    
+    if (len != 4)
+        return FPM_READ_ERROR;
+    
+    *number = buffer[1]; 
+    *number <<= 8;
+    *number |= buffer[2];
+    *number <<= 8;
+    *number |= buffer[3];
+    *number <<= 8;
+    *number |= buffer[4];
+
     return confirm_code;
 }
 
