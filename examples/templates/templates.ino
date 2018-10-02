@@ -11,6 +11,15 @@ SoftwareSerial fserial(2, 3);
 FPM finger(&fserial);
 FPM_System_Params params;
 
+/* this is equal to the template size for the fingerprint module,
+ * some modules have 512-byte templates while others have
+ * 768-byte templates. Check the printed result of read_template()
+ * to determine the case for your module and adjust the needed buffer
+ * size below accordingly */
+#define BUFF_SZ     768
+
+uint8_t template_buffer[BUFF_SZ];
+
 void setup()
 {
     Serial.begin(9600);
@@ -42,9 +51,12 @@ void loop()
         yield();
     }
 
-    if (!read_template(fid))
+    /* read the template from its location into the buffer */
+    uint16_t total_read = read_template(fid, template_buffer, BUFF_SZ);
+    if (!total_read)
         return;
-        
+
+    /* delete it from that location */
     delete_template(fid);
 
     Serial.println("Enter the template's new ID...");
@@ -60,14 +72,11 @@ void loop()
         yield();
     }
 
-    move_template(new_id);
+    /* copy it from the buffer to its new location */
+    move_template(new_id, template_buffer, total_read);
 }
 
-#define BUFF_SZ     512
-
-uint8_t template_buffer[BUFF_SZ];
-
-bool read_template(uint16_t fid)
+uint16_t read_template(uint16_t fid, uint8_t * buffer, uint16_t buff_sz)
 {
     int16_t p = finger.loadModel(fid);
     switch (p) {
@@ -76,13 +85,13 @@ bool read_template(uint16_t fid)
             break;
         case FPM_PACKETRECIEVEERR:
             Serial.println("Communication error");
-            return false;
+            return 0;
         case FPM_DBREADFAIL:
             Serial.println("Invalid template");
-            return false;
+            return 0;
         default:
             Serial.print("Unknown error "); Serial.println(p);
-            return false;
+            return 0;
     }
 
     // OK success!
@@ -93,35 +102,40 @@ bool read_template(uint16_t fid)
             break;
         default:
             Serial.print("Unknown error "); Serial.println(p);
-            return false; 
+            return 0; 
     }
 
     bool read_finished;
     int16_t count = 0;
-    uint16_t readlen = BUFF_SZ;
+    uint16_t readlen = buff_sz;
     uint16_t pos = 0;
 
     while (true) {
-        bool ret = finger.readRaw(FPM_OUTPUT_TO_BUFFER, template_buffer + pos, &read_finished, &readlen);
+        bool ret = finger.readRaw(FPM_OUTPUT_TO_BUFFER, buffer + pos, &read_finished, &readlen);
         if (ret) {
             count++;
             pos += readlen;
-            readlen = BUFF_SZ - pos;
+            readlen = buff_sz - pos;
             if (read_finished)
                 break;
         }
         else {
             Serial.println("Error receiving packet");
-            return false;
+            return 0;
         }
         yield();
     }
-
+    
+    uint16_t total_bytes = count * fpm_packet_lengths[params.packet_len];
+    
+    /* just for pretty-printing */
+    uint16_t num_rows = total_bytes / 16;
+    
     Serial.println("Printing template:");
     Serial.println("---------------------------------------------");
-    for (int row = 0; row < 32; row++) {
+    for (int row = 0; row < num_rows; row++) {
         for (int col = 0; col < 16; col++) {
-            Serial.print(template_buffer[row * 16 + col], HEX);
+            Serial.print(buffer[row * 16 + col], HEX);
             Serial.print(" ");
         }
         Serial.println();
@@ -129,8 +143,8 @@ bool read_template(uint16_t fid)
     }
     Serial.println("--------------------------------------------");
 
-    Serial.print(count * fpm_packet_lengths[params.packet_len]); Serial.println(" bytes read.");
-    return true;
+    Serial.print(total_bytes); Serial.println(" bytes read.");
+    return total_bytes;
 }
 
 void delete_template(uint16_t fid) {
@@ -154,7 +168,7 @@ void delete_template(uint16_t fid) {
     return;
 }
 
-void move_template(uint16_t fid) {
+void move_template(uint16_t fid, uint8_t * buffer, uint16_t to_write) {
     int16_t p = finger.uploadModel();
     switch (p) {
         case FPM_OK:
@@ -172,7 +186,7 @@ void move_template(uint16_t fid) {
     }
 
     yield();
-    finger.writeRaw(template_buffer, BUFF_SZ);
+    finger.writeRaw(buffer, to_write);
 
     p = finger.storeModel(fid);
     switch (p) {
