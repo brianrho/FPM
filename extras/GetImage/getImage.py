@@ -78,11 +78,14 @@ def getPrint():
 
     '''
     out = open(input("Enter filename/path of output file (without extension): ")+'.bmp', 'wb')
-    out.write(assembleHeader(WIDTH, HEIGHT, DEPTH, True))  # assemble and write the BMP header to the file
-    for i in range(256):   # write the colour palette
-        out.write(i.to_bytes(1,byteorder='little')*4)
+    # assemble and write the BMP header to the file
+    out.write(assembleHeader(WIDTH, HEIGHT, DEPTH, True))
+    for i in range(256):
+        # write the colour palette
+        out.write(i.to_bytes(1,byteorder='little') * 4)
     try:
-        ser = serial.Serial(portSettings[0], portSettings[1], timeout=1)  #open the port; timeout is 1 sec; also resets the arduino
+        # open the port; timeout is 1 sec; also resets the arduino
+        ser = serial.Serial(portSettings[0], portSettings[1], timeout=1)
     except Exception:
         print('Invalid port settings!')
         print()
@@ -90,24 +93,34 @@ def getPrint():
         return
     while ser.isOpen():
         try:
-            curr = ser.read().decode()  # assumes everything recved at first is printable ascii
-            if curr == '\t':   # based on the finger2PC sketch, \t indicates start of the stream; should probably change to some non-ascii char
-                print('Extracting image...', end='')
-                for i in range(HALF_BITMAP_SIZE): # start recving 36864 bytes
+            # assumes everything recved at first is printable ascii
+            curr = ser.read().decode()
+            # based on the image_to_pc sketch, \t indicates start of the stream
+            if curr == '\t':
+                for i in range(HALF_BITMAP_SIZE): # start recving image
                     byte = ser.read()
-                    if not byte:  # if we get b'' after the 1 sec timeout period
+                    # if we get nothing after the 1 sec timeout period
+                    if not byte:
                         print("Timeout!")
                         out.close()  # close port and file
                         ser.close()
                         return False
-                    out.write((byte[0]).to_bytes(1, byteorder='little') * 2)  # write the same byte twice; adjacent pixels either have same or close-enough values 
-                out.close()  # close port and file
+                    # write the same byte twice; adjacent pixels either have same or close-enough values
+                    out.write((byte[0]).to_bytes(1, byteorder='little') * 2)
+                    
+                out.close()  # close file
+                print('Image saved as', out.name)
+                
+                # read anything that's left and print
+                left = ser.read(100)
+                print(left.decode('ascii', errors='ignore'))
                 ser.close()
-                print('saved as', out.name)
+                
                 print()
                 return True
             else:
-                print(curr, end='')   # print the debug messages from arduino running the finger2PC sketch
+                # print the debug messages from arduino running the image_to_pc sketch
+                print(curr, end='')
         except Exception as e:
             print("ERROR: ", e)
             out.close()

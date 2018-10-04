@@ -51,7 +51,6 @@ void stream_image(void) {
                 Serial.println("Image taken");
                 break;
             case FPM_NOFINGER:
-                Serial.println(".");
                 break;
             case FPM_PACKETRECIEVEERR:
                 Serial.println("Communication error");
@@ -92,13 +91,14 @@ void stream_image(void) {
                 break;
         }
         else {
-            Serial.print("Error receiving packet ");
+            Serial.print("\r\nError receiving packet ");
             Serial.println(count);
             return;
         }
         yield();
     }
-    
+
+    Serial.println();
     Serial.print(count * fpm_packet_lengths[params.packet_len]); Serial.println(" bytes read.");
     Serial.println("Image stream complete.");
 }
