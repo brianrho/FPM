@@ -36,7 +36,7 @@ typedef enum {
     FPM_STATE_READ_CHECKSUM
 } FPM_State;
 
-const uint16_t fpm_packet_lengths[] = {32, 64, 128, 256};
+const uint16_t FPM::packet_lengths[] = {32, 64, 128, 256};
 
 FPM::FPM(Stream * ss) : 
     port(ss), password(0), address(0xFFFFFFFF)
@@ -277,7 +277,7 @@ bool FPM::readRaw(uint8_t outType, void * out, bool * read_complete, uint16_t * 
     else
         return false;
     
-    uint16_t chunk_sz = fpm_packet_lengths[sys_params.packet_len];
+    uint16_t chunk_sz = packet_lengths[sys_params.packet_len];
     uint8_t pid;
     int16_t len;
     
@@ -308,7 +308,7 @@ bool FPM::readRaw(uint8_t outType, void * out, bool * read_complete, uint16_t * 
 
 void FPM::writeRaw(uint8_t * data, uint16_t len) {
     uint16_t written = 0;
-    uint16_t chunk_sz = fpm_packet_lengths[sys_params.packet_len];
+    uint16_t chunk_sz = packet_lengths[sys_params.packet_len];
     
     while (len > chunk_sz) {
         writePacket(FPM_DATAPACKET, &data[written], chunk_sz);

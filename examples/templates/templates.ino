@@ -30,7 +30,7 @@ void setup()
         finger.readParams(&params);
         Serial.println("Found fingerprint sensor!");
         Serial.print("Capacity: "); Serial.println(params.capacity);
-        Serial.print("Packet length: "); Serial.println(fpm_packet_lengths[params.packet_len]);
+        Serial.print("Packet length: "); Serial.println(FPM::packet_lengths[params.packet_len]);
     } else {
         Serial.println("Did not find fingerprint sensor :(");
         while (1) yield();
@@ -126,7 +126,7 @@ uint16_t read_template(uint16_t fid, uint8_t * buffer, uint16_t buff_sz)
         yield();
     }
     
-    uint16_t total_bytes = count * fpm_packet_lengths[params.packet_len];
+    uint16_t total_bytes = count * FPM::packet_lengths[params.packet_len];
     
     /* just for pretty-printing */
     uint16_t num_rows = total_bytes / 16;

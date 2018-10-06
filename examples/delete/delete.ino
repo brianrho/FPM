@@ -21,7 +21,7 @@ void setup()
         finger.readParams(&params);
         Serial.println("Found fingerprint sensor!");
         Serial.print("Capacity: "); Serial.println(params.capacity);
-        Serial.print("Packet length: "); Serial.println(fpm_packet_lengths[params.packet_len]);
+        Serial.print("Packet length: "); Serial.println(FPM::packet_lengths[params.packet_len]);
     } else {
         Serial.println("Did not find fingerprint sensor :(");
         while (1) yield();

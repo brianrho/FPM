@@ -57,7 +57,7 @@
 #define FPM_IMGUPLOAD               0x0A
 #define FPM_DELETE                  0x0C
 #define FPM_EMPTYDATABASE           0x0D
-#define FPM_SETSYSPARAM	            0x0E
+#define FPM_SETSYSPARAM             0x0E
 #define FPM_READSYSPARAM            0x0F
 #define FPM_VERIFYPASSWORD          0x13
 #define FPM_SEARCH                  0x04
@@ -182,6 +182,8 @@ class FPM {
         int16_t led_on(void);
         int16_t led_off(void);
 
+        static const uint16_t packet_lengths[];
+        
     private: 
         uint8_t buffer[FPM_BUFFER_SZ];
         Stream * port;
@@ -194,7 +196,5 @@ class FPM {
         int16_t getReply(uint8_t * replyBuf, uint16_t buflen, uint8_t * pktid, Stream * outStream = NULL);
         int16_t read_ack_get_response(uint8_t * rc);
 };
-
-extern const uint16_t fpm_packet_lengths[];
 
 #endif
