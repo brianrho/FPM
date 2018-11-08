@@ -66,6 +66,7 @@
 #define FPM_READTEMPLATEINDEX       0x1F
 #define FPM_PAIRMATCH               0x03
 #define FPM_SETPASSWORD             0x12
+#define FPM_STANDBY                 0x33
 
 #define FPM_LEDON                   0x50
 #define FPM_LEDOFF                  0x51
@@ -163,13 +164,17 @@ class FPM {
 
         int16_t emptyDatabase(void);
         int16_t storeModel(uint16_t id, uint8_t slot = 1);
+        
+        /* loads template with ID #'id' from the database into buffer #'slot' */
         int16_t loadModel(uint16_t id, uint8_t slot = 1);
         int16_t setParam(uint8_t param, uint8_t value);
         int16_t readParams(FPM_System_Params * params = NULL);
         int16_t downImage(void);
         bool readRaw(uint8_t outType, void * out, bool * read_complete, uint16_t * read_len = NULL);
         void writeRaw(uint8_t * data, uint16_t len);
-        int16_t getModel(void);
+        
+        /* initiates the transfer of the template in buffer #'slot' to the MCU */
+        int16_t getModel(uint8_t slot = 1);
         int16_t uploadModel(void);
         int16_t deleteModel(uint16_t id, uint16_t how_many = 1);
         int16_t fingerFastSearch(uint16_t * finger_id, uint16_t * score, uint8_t slot = 1);
@@ -181,6 +186,7 @@ class FPM {
 
         int16_t led_on(void);
         int16_t led_off(void);
+        int16_t standby(void);
 
         static const uint16_t packet_lengths[];
         

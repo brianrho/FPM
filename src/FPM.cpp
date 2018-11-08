@@ -132,6 +132,19 @@ int16_t FPM::led_off(void) {
     return confirm_code;
 }
 
+// tested on R551 modules
+int16_t FPM::standby(void) {
+    buffer[0] = FPM_STANDBY;
+    writePacket(FPM_COMMANDPACKET, buffer, 1);
+    uint8_t confirm_code = 0;
+    int16_t rc = read_ack_get_response(&confirm_code);
+    
+    if (rc < 0)
+        return rc;
+    
+    return confirm_code;
+}
+
 int16_t FPM::image2Tz(uint8_t slot) {
     buffer[0] = FPM_IMAGE2TZ; 
     buffer[1] = slot;
@@ -319,9 +332,9 @@ void FPM::writeRaw(uint8_t * data, uint16_t len) {
 }
 
 //transfer a fingerprint template from Char Buffer 1 to host computer
-int16_t FPM::getModel(void) {
+int16_t FPM::getModel(uint8_t slot) {
     buffer[0] = FPM_UPLOAD;
-    buffer[1] = 0x01;
+    buffer[1] = slot;
     writePacket(FPM_COMMANDPACKET, buffer, 2);
     uint8_t confirm_code = 0;
     int16_t rc = read_ack_get_response(&confirm_code);
