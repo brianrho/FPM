@@ -11,6 +11,10 @@
 #include <stdint.h>
 #include <stddef.h>
 
+/* Some modules like the R551 don't support "high-speed" search,
+   comment this line if you have one of those */
+#define FPM_ENABLE_HISPEED_SEARCH
+
 /* uncomment to enable debug output */
 //#define FPM_ENABLE_DEBUG
 

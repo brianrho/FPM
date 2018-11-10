@@ -387,7 +387,11 @@ int16_t FPM::emptyDatabase(void) {
 
 int16_t FPM::fingerFastSearch(uint16_t * finger_id, uint16_t * score, uint8_t slot) {
     // high speed search of slot #1 starting at page 0 to 'capacity'
+    #if defined(FPM_ENABLE_HISPEED_SEARCH)
     buffer[0] = FPM_HISPEEDSEARCH;
+    #else
+    buffer[0] = FPM_SEARCH;
+    #endif
     buffer[1] = slot;
     buffer[2] = 0x00; buffer[3] = 0x00;
     buffer[4] = (uint8_t)(sys_params.capacity >> 8); 
