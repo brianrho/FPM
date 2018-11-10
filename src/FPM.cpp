@@ -387,10 +387,10 @@ int16_t FPM::emptyDatabase(void) {
 
 int16_t FPM::fingerFastSearch(uint16_t * finger_id, uint16_t * score, uint8_t slot) {
     // high speed search of slot #1 starting at page 0 to 'capacity'
-    #if defined(FPM_ENABLE_HISPEED_SEARCH)
-    buffer[0] = FPM_HISPEEDSEARCH;
-    #else
+    #if defined(FPM_R551_MODULE)
     buffer[0] = FPM_SEARCH;
+    #else
+    buffer[0] = FPM_HISPEEDSEARCH;
     #endif
     buffer[1] = slot;
     buffer[2] = 0x00; buffer[3] = 0x00;
@@ -482,18 +482,22 @@ int16_t FPM::getFreeIndex(uint8_t page, int16_t * id) {
     if (confirm_code != FPM_OK)
         return confirm_code;
     
-    for (int group = 0; group < len; group++) {
-        if (buffer[1+group] == 0xff)
+    for (int group_idx = 0; group_idx < len; group_idx++) {
+        uint8_t group = buffer[1 + group_idx];
+        if (group == 0xff)        /* if group is all occupied */
             continue;
         
-        uint8_t bit_index = 0;
-        for (uint8_t bit = 0x01; bit != 0; bit <<= 1) {
-            if ((bit & buffer[1+group]) == 0){
-                *id = (FPM_TEMPLATES_PER_PAGE * page) + (group * 8) + bit_index;
+        for (uint8_t bit_mask = 0x01, fid = 0; bit_mask != 0; bit_mask <<= 1, fid++) {
+            if ((bit_mask & group) == 0) {
+                #if defined(FPM_R551_MODULE)
+                if (group_idx == 0 && fid == 0)     /* Skip LSb of first group */
+                    continue;
+                *id = (FPM_TEMPLATES_PER_PAGE * page) + (group_idx * 8) + fid - 1;      /* all IDs are off by one */
+                #else
+                *id = (FPM_TEMPLATES_PER_PAGE * page) + (group_idx * 8) + fid;
+                #endif
                 return confirm_code;
             }
-            
-            bit_index++;
         }
     }
     
