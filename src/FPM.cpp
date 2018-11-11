@@ -490,7 +490,7 @@ int16_t FPM::getFreeIndex(uint8_t page, int16_t * id) {
         for (uint8_t bit_mask = 0x01, fid = 0; bit_mask != 0; bit_mask <<= 1, fid++) {
             if ((bit_mask & group) == 0) {
                 #if defined(FPM_R551_MODULE)
-                if (group_idx == 0 && fid == 0)     /* Skip LSb of first group */
+                if (page == 0 && group_idx == 0 && fid == 0)     /* Skip LSb of first group */
                     continue;
                 *id = (FPM_TEMPLATES_PER_PAGE * page) + (group_idx * 8) + fid - 1;      /* all IDs are off by one */
                 #else
