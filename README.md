@@ -10,3 +10,5 @@ especially when retrieving fingerprint images.
 Datasheet found at https://sicherheitskritisch.de/files/specifications-2.0-en.pdf
 
 Note: The `led_on()`, `led_off()` and `getImageNL()` methods have only been tested successfully with ZFM60 modules.
+
+A generic version of this library in C can be found here: https://github.com/brianrho/FPM-C
