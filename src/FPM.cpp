@@ -132,7 +132,9 @@ int16_t FPM::led_off(void) {
     return confirm_code;
 }
 
-// tested on R551 modules
+/* tested on R551 modules,
+   standby current measured at 10uA, UART and LEDs turned off,
+   no other documentation available */
 int16_t FPM::standby(void) {
     buffer[0] = FPM_STANDBY;
     writePacket(FPM_COMMANDPACKET, buffer, 1);

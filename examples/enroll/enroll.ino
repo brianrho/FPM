@@ -52,6 +52,7 @@ bool get_free_id(int16_t * fid) {
                     Serial.println(*fid);
                     return true;
                 }
+                break;
             case FPM_PACKETRECIEVEERR:
                 Serial.println("Communication error!");
                 return false;
@@ -67,6 +68,9 @@ bool get_free_id(int16_t * fid) {
         }
         yield();
     }
+    
+    Serial.println("No free slots!");
+    return false;
 }
 
 int16_t enroll_finger(int16_t fid) {
