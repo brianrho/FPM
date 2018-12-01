@@ -11,4 +11,5 @@ Datasheet found at https://sicherheitskritisch.de/files/specifications-2.0-en.pd
 
 Note: The `led_on()`, `led_off()` and `getImageNL()` methods have only been tested successfully with ZFM60 modules.
 
-A generic version of this library in C can be found here: https://github.com/brianrho/FPM-C
+A generic version of this library in C: https://github.com/brianrho/FPM-C
+An Arduino library for the GT511C3 (and similar GT5x) fingerprint sensors: https://github.com/brianrho/GT5X
