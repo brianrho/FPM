@@ -1,5 +1,4 @@
-This is an Arduino library for the R3xx/ZFMxx/FPMxx/R551 optical fingerprint sensors,
-built off of the Adafruit Fingerprint Sensor Library: https://github.com/adafruit/Adafruit-Fingerprint-Sensor-Library. 
+This is an Arduino library for the R3xx/ZFMxx/FPMxx/R551 optical fingerprint sensors.
 
 Included are a Python script and a Windows executable for extracting fingerprint images to a PC; 
 the `image_to_pc` example must first be uploaded to the Arduino. 
