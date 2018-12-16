@@ -3,8 +3,16 @@
 
 import serial, time
 
-WIDTH = 256
-HEIGHT = 288
+# assign True if you have an R551 module, image size is different
+FPM_R551_MODULE = False
+
+if FPM_R551_MODULE:
+    WIDTH = 96
+    HEIGHT = 192
+else:
+    WIDTH = 256
+    HEIGHT = 288
+    
 DEPTH = 8
 
 HALF_BITMAP_SIZE = int(WIDTH * HEIGHT / 2)
