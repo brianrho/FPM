@@ -188,6 +188,7 @@ class FPM {
         int16_t setPassword(uint32_t pwd);
         int16_t getRandomNumber(uint32_t * number);
 
+        /* these 3 works only on ZFM60 so far */
         int16_t led_on(void);
         int16_t led_off(void);
         int16_t standby(void);

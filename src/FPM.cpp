@@ -664,8 +664,9 @@ int16_t FPM::getReply(uint8_t * replyBuf, uint16_t buflen, uint8_t * pktid, Stre
                 }
                 else {
                     *replyBuf++ = byte;
-                    chksum += byte;
                 }
+                
+                chksum += byte;
                 
                 FPM_DEBUG_HEX(byte); FPM_DEBUG_PRINT(" ");
                 remn--;
@@ -681,7 +682,7 @@ int16_t FPM::getReply(uint8_t * replyBuf, uint16_t buflen, uint8_t * pktid, Stre
                 uint16_t to_check = temp[0]; to_check <<= 8;
                 to_check |= temp[1];
                 
-                if (outStream == NULL && to_check != chksum) {
+                if (to_check != chksum) {
                     state = FPM_STATE_READ_HEADER;
                     FPM_DEBUG_PRINTLN("\r\n[+]Wrong chksum");
                     continue;
