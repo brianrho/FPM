@@ -1,5 +1,5 @@
-This is an Arduino library for the R30x/ZFMxx/FPMxx/R551 optical fingerprint sensors. 
-(The R308 is *not* supported as it lacks some key commands supported by most other sensors.)
+This is an Arduino library for the R30x/ZFMxx/FPMxx/R551 optical fingerprint sensors.\
+(The R308 is **not** supported as it lacks some key commands supported by most other sensors.)
 
 Included are a Python script and a Windows executable for extracting fingerprint images to a PC; 
 the `image_to_pc` example must first be uploaded to the Arduino. 
