@@ -1,10 +1,15 @@
 #include <SoftwareSerial.h>
 #include <FPM.h>
 
-/* Set system parameters such as the baud rate */
-
-/*  pin #2 is IN from sensor (GREEN wire)
-    pin #3 is OUT from arduino  (WHITE/YELLOW wire)
+/* Set system parameters such as the baud rate
+ *
+ * WARNING!!! RUNNING THIS SKETCH WILL CHANGE THE BAUD RATE OF YOUR SENSOR.
+ * YOU WILL BE UNABLE TO TALK TO THE SENSOR UNLESS YOU USE THE NEW BAUD RATE
+ * IN FUTURE SoftwareSerial begin() CALLS AS SHOWN BELOW.
+ */
+ 
+/*  pin #2 <= sensor TX
+    pin #3 => sensor RX
 */
 SoftwareSerial fserial(2, 3);
 

@@ -1,10 +1,15 @@
 #include <SoftwareSerial.h>
 #include <FPM.h>
 
-/* Set module password */
+/* Set module password 
+ *
+ * WARNING!!! RUNNING THIS SKETCH WILL CHANGE THE PASSWORD OF YOUR SENSOR.
+ * YOU WILL BE UNABLE TO TALK TO THE SENSOR UNLESS YOU USE THE NEW PASSWORD
+ * IN FUTURE begin() CALLS AS SHOWN BELOW.
+ */
 
-/*  pin #2 is IN from sensor (GREEN wire)
-    pin #3 is OUT from arduino  (WHITE/YELLOW wire)
+/*  pin #2 <= sensor TX
+    pin #3 => sensor RX
 */
 SoftwareSerial fserial(2, 3);
 
@@ -45,6 +50,7 @@ void loop()
     }
 
     delay(1000);
+    Serial.print("New password: 0x"); Serial.println(new_password);
     Serial.println("Testing new password by calling begin() again");
     if (finger.begin(new_password)) {
         finger.readParams(&params);
