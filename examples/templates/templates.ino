@@ -12,11 +12,11 @@ FPM finger(&fserial);
 FPM_System_Params params;
 
 /* this is equal to the template size for the fingerprint module,
- * some modules have 512-byte templates while others have
- * 768-byte templates. Check the printed result of read_template()
+ * some modules have 512-byte templates while others have template sizes as
+ * high as 1024 bytes. Check the printed result of read_template()
  * to determine the case for your module and adjust the needed buffer
  * size below accordingly */
-#define BUFF_SZ     768
+#define BUFF_SZ     1024
 
 uint8_t template_buffer[BUFF_SZ];
 
@@ -90,7 +90,7 @@ uint16_t read_template(uint16_t fid, uint8_t * buffer, uint16_t buff_sz)
             Serial.println("Invalid template");
             return 0;
         default:
-            Serial.print("Unknown error "); Serial.println(p);
+            Serial.print("Unknown error: "); Serial.println(p);
             return 0;
     }
 
@@ -101,7 +101,7 @@ uint16_t read_template(uint16_t fid, uint8_t * buffer, uint16_t buff_sz)
         case FPM_OK:
             break;
         default:
-            Serial.print("Unknown error "); Serial.println(p);
+            Serial.print("Unknown error: "); Serial.println(p);
             return 0; 
     }
 
@@ -120,7 +120,8 @@ uint16_t read_template(uint16_t fid, uint8_t * buffer, uint16_t buff_sz)
                 break;
         }
         else {
-            Serial.println("Error receiving packet");
+            Serial.print("Error receiving packet ");
+            Serial.println(count);
             return 0;
         }
         yield();
@@ -163,7 +164,9 @@ void delete_template(uint16_t fid) {
             Serial.println("Error writing to flash");
             break;
         default:
-            Serial.println("Unknown error");
+            Serial.print("Unknown error: "); 
+            Serial.println(p);
+            break;
     }
     return;
 }
@@ -181,7 +184,8 @@ void move_template(uint16_t fid, uint8_t * buffer, uint16_t to_write) {
             Serial.println("Did not receive packet");
             return;
         default:
-            Serial.println("Unknown error");
+            Serial.print("Unknown error: "); 
+            Serial.println(p);
             return;
     }
 
@@ -203,7 +207,9 @@ void move_template(uint16_t fid, uint8_t * buffer, uint16_t to_write) {
             Serial.println("Error writing to flash");
             break;
         default:
-            Serial.println("Unknown error");
+            Serial.print("Unknown error: "); 
+            Serial.println(p);
+            break;
     }
     return;
 }

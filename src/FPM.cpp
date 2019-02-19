@@ -302,7 +302,7 @@ bool FPM::readRaw(uint8_t outType, void * out, bool * read_complete, uint16_t * 
         len = getReply(NULL, 0, &pid, outStream);
     
     /* check the length */
-    if (len != chunk_sz) {
+    if (len <= 0) {
         FPM_DEBUG_PRINT("Read data failed: ");
         FPM_DEBUG_PRINTLN(len);
         return false;
@@ -347,7 +347,7 @@ int16_t FPM::getModel(uint8_t slot) {
     return confirm_code;
 }
 
-int16_t FPM::uploadModel(void){
+int16_t FPM::uploadModel(void) {
     buffer[0] = FPM_DOWNCHAR;
     buffer[1] = 0x01;
     writePacket(FPM_COMMANDPACKET, buffer, 2);
