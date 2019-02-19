@@ -10,11 +10,12 @@ Datasheet found [here](https://sicherheitskritisch.de/files/specifications-2.0-e
 To match templates on your PC/server, check [here](https://github.com/brianrho/fpmatch).\
 A generic version of this [library in C](https://github.com/brianrho/FPM-C).\
 An Arduino library for the [GT511C3 (and similar GT5x) fingerprint sensors](https://github.com/brianrho/GT5X).\
-
-**NB**: 
-* The R308 is **not** supported for now as it lacks certain commands supported by most other sensors and needed by this library.\
+\
+**Note**: 
+* The R308 is **not** supported for now as it lacks certain commands supported by most other sensors and needed by this library.
 
 * The R551 seems to have clones, and a datasheet/SDK inconsistent with the sensor's actual behaviour.\
-They all have trouble working with the library, particularly more advanced functionality like image/template downloads.\
-To take full advantage of the available functionality, it's recommended you get an FPM10, R305/7 or ZFM60,\ 
-especially the first which has been well-tested with this library.
+To use one of them with this library, make sure to uncomment `FPM_R551_MODULE` in `FPM.h`.
+However, they generally have trouble working with the library, particularly more advanced functionality like image/template downloads.\
+To take full advantage of the available functionality, it's recommended you get an FPM10, R305/7 or ZFM60,\
+especially the first which has been well-tested with this library.\
