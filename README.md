@@ -18,4 +18,4 @@ An Arduino library for the [GT511C3 (and similar GT5x) fingerprint sensors](http
 To use one of them with this library, make sure to uncomment `FPM_R551_MODULE` in `FPM.h`.
 However, they generally have trouble working with the library, particularly more advanced functionality like image/template downloads.\
 To take full advantage of the available functionality, it's recommended you get an FPM10, R305/7 or ZFM60,\
-especially the first which has been well-tested with this library.\
+especially the first which has been well-tested with this library.
