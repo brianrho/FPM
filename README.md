@@ -12,7 +12,8 @@ A generic version of this [library in C](https://github.com/brianrho/FPM-C).\
 An Arduino library for the [GT511C3 (and similar GT5x) fingerprint sensors](https://github.com/brianrho/GT5X).\
 \
 **Note**: 
-* The R308 is **not** supported for now as it lacks certain commands supported by most other sensors and needed by this library.
+* The R308 is tentatively supported for now. Since its settings cannot be read by the usual commands, they have to be\
+set manually to defaults based on the datasheet, at the risk that these defaults may be wrong.
 
 * The R551 seems to have clones, and a datasheet/SDK inconsistent with the sensor's actual behaviour.\
 To use one of them with this library, make sure to uncomment `FPM_R551_MODULE` in `FPM.h`.

@@ -26,6 +26,14 @@ void setup()
         Serial.println("Did not find fingerprint sensor :(");
         while (1) yield();
     }
+
+    /* just to find out if your sensor supports the handshake command */
+    if (finger.handshake()) {
+        Serial.println("Handshake command is supported.");
+    }
+    else {
+        Serial.println("Handshake command not supported.");
+    }
 }
 
 void loop()

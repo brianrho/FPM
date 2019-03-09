@@ -11,12 +11,14 @@ SoftwareSerial fserial(2, 3);
 FPM finger(&fserial);
 FPM_System_Params params;
 
-/* this is equal to the template size for the fingerprint module,
- * some modules have 512-byte templates while others have template sizes as
- * high as 1024 bytes. Check the printed result of read_template()
+/* this should be equal to the template size for your sensor but
+ * some sensors have 512-byte templates while others have template sizes as
+ * high as 1024 bytes. So check the printed result of read_template()
  * to determine the case for your module and adjust the needed buffer
- * size below accordingly */
-#define BUFF_SZ     1024
+ * size below accordingly. If it doesn't work at first, try increasing
+ * this value to 1024
+ */
+#define BUFF_SZ     768
 
 uint8_t template_buffer[BUFF_SZ];
 
@@ -96,7 +98,7 @@ uint16_t read_template(uint16_t fid, uint8_t * buffer, uint16_t buff_sz)
 
     // OK success!
 
-    p = finger.getModel();
+    p = finger.downloadModel();
     switch (p) {
         case FPM_OK:
             break;

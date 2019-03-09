@@ -1,8 +1,8 @@
 #include <SoftwareSerial.h>
 #include <FPM.h>
 
-/* Enroll fingerprints with explicit control of module LED 
- * so far, only works with ZFM60 modules */
+/* Enroll fingerprints with direct control of sensor LED 
+ * So far, only works with ZFM60 modules */
 
 /*  pin #2 is IN from sensor (GREEN wire)
  *  pin #3 is OUT from arduino  (WHITE/YELLOW wire)
@@ -26,6 +26,14 @@ void setup()
     } else {
         Serial.println("Did not find fingerprint sensor :(");
         while (1) yield();
+    }
+    
+    /* just to find out if your sensor supports the handshake command */
+    if (finger.handshake()) {
+        Serial.println("Handshake command is supported.");
+    }
+    else {
+        Serial.println("Handshake command not supported.");
     }
 }
 

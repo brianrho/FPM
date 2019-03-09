@@ -1,11 +1,13 @@
 #include <SoftwareSerial.h>
 #include <FPM.h>
 
-/* Set system parameters such as the baud rate
+/* Set sensor parameters such as the baud rate
  *
  * WARNING!!! RUNNING THIS SKETCH WILL CHANGE THE BAUD RATE OF YOUR SENSOR.
  * YOU WILL BE UNABLE TO TALK TO THE SENSOR UNLESS YOU USE THE NEW BAUD RATE
  * IN FUTURE SoftwareSerial begin() CALLS AS SHOWN BELOW.
+ * 
+ * This functionality is NOT SUPPORTED for the R308 since it doesnt support the needed commands.
  */
  
 /*  pin #2 <= sensor TX
@@ -53,7 +55,7 @@ void change_baud_rate(void) {
     }
 
     /* Switch to new baud rate here; may or may not work,
-     * Module restart may still be required */
+     * Sensor restart may still be required */
     fserial.end();
     Serial.println("Testing new baud rate by trying a GET_FREE_ID...");
     fserial.begin(9600);
@@ -61,7 +63,7 @@ void change_baud_rate(void) {
     
     int16_t fid;
     get_free_id(&fid);
-    /* best to restart module at this point,
+    /* best to restart sensor at this point,
      *  running setparam again or even other commands causes unreliable behaviour
      */
 }

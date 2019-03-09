@@ -119,7 +119,7 @@ void match_prints(int16_t fid) {
     p = finger.matchTemplatePair(&match_score);
     switch (p) {
         case FPM_OK:
-            Serial.print("Match score: "); Serial.println(match_score);
+            Serial.print("Prints matched. Score: "); Serial.println(match_score);
             break;
         case FPM_NOMATCH:
             Serial.println("Prints did not match.");
@@ -129,4 +129,3 @@ void match_prints(int16_t fid) {
             return;
     }
 }
-

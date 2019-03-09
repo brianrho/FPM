@@ -108,7 +108,7 @@ int search_database(void) {
 
     /* search the database for the converted print */
     uint16_t fid, score;
-    p = finger.fingerFastSearch(&fid, &score);
+    p = finger.searchDatabase(&fid, &score);
     if (p == FPM_OK) {
         Serial.println("Found a print match!");
     } else if (p == FPM_PACKETRECIEVEERR) {
