@@ -111,6 +111,8 @@ void stream_image(void) {
     Serial.println("Image stream complete.");
 }
 
+
+/* no need to call this for R308 */
 bool set_packet_len_128(void) {
     uint8_t param = FPM_SETPARAM_PACKET_LEN; // Example
     uint8_t value = FPM_PLEN_128;
