@@ -35,6 +35,8 @@ FPM finger(&fserial);
 FPM_System_Params params;
 
 void setup(void) {
+    Serial.begin(9600);
+    
     /* RX = IO16, TX = IO17 */
     fserial.begin(57600, SERIAL_8N1, 16, 17);
     
