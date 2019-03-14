@@ -13,7 +13,7 @@ An Arduino library for the [GT511C3 (and similar GT5x) fingerprint sensors](http
 \
 **Note**: 
 * The R308 is tentatively supported for now. Since its settings cannot be read by the usual commands, they have to be\
-set manually to defaults based on the datasheet, at the risk that these defaults may be wrong. In any case,\ 
+set manually to defaults based on the datasheet, at the risk that these defaults may be wrong. In any case,\
 **make sure** to check the `setup()` of the `R308_search_database` example for how to properly initialize your sensor.
 
 * The R551 seems to have several clones, and a datasheet/SDK that's inconsistent with the sensor's actual behaviour.\
