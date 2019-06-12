@@ -75,17 +75,8 @@ bool FPM::begin(uint32_t pwd, uint32_t addr, FPM_System_Params * params) {
     delay(1000);            // 500 ms at least according to datasheet
     
     address = addr;
-    password = pwd;
     
-    buffer[0] = FPM_VERIFYPASSWORD;
-    buffer[1] = (password >> 24) & 0xff; buffer[2] = (password >> 16) & 0xff;
-    buffer[3] = (password >> 8) & 0xff; buffer[4] = password & 0xff;
-    writePacket(FPM_COMMANDPACKET, buffer, 5);
-    uint8_t confirm_code = 0;
-    int16_t len = read_ack_get_response(&confirm_code);
-    
-    if (len < 0 || confirm_code != FPM_OK)
-        return false;
+    if(!verifyPassword(pwd)) return false;
 
     manual_settings = false;
     if (params != NULL) {
@@ -100,10 +91,41 @@ bool FPM::begin(uint32_t pwd, uint32_t addr, FPM_System_Params * params) {
     return true;
 }
 
+bool FPM::verifyPassword(uint32_t pwd) {
+    password = pwd;
+    
+    buffer[0] = FPM_VERIFYPASSWORD;
+    buffer[1] = (password >> 24) & 0xff; buffer[2] = (password >> 16) & 0xff;
+    buffer[3] = (password >> 8) & 0xff; buffer[4] = password & 0xff;
+    writePacket(FPM_COMMANDPACKET, buffer, 5);
+    uint8_t confirm_code = 0;
+    int16_t len = read_ack_get_response(&confirm_code);
+    
+    if (len < 0 || confirm_code != FPM_OK)
+        return false;
+    
+    return true;
+}
+
 int16_t FPM::setPassword(uint32_t pwd) {
     buffer[0] = FPM_SETPASSWORD;
     buffer[1] = (pwd >> 24) & 0xff; buffer[2] = (pwd >> 16) & 0xff;
     buffer[3] = (pwd >> 8) & 0xff; buffer[4] = pwd & 0xff;
+    
+    writePacket(FPM_COMMANDPACKET, buffer, 5);
+    uint8_t confirm_code = 0;
+    int16_t rc = read_ack_get_response(&confirm_code);
+    
+    if (rc < 0)
+        return rc;
+    
+    return confirm_code;
+}
+
+int16_t FPM::setAddress(uint32_t addr) {
+    buffer[0] = FPM_SETADDRESS;
+    buffer[1] = (addr >> 24) & 0xff; buffer[2] = (addr >> 16) & 0xff;
+    buffer[3] = (addr >> 8) & 0xff; buffer[4] = addr & 0xff;
     
     writePacket(FPM_COMMANDPACKET, buffer, 5);
     uint8_t confirm_code = 0;
