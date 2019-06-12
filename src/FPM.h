@@ -74,6 +74,7 @@
 #define FPM_READTEMPLATEINDEX       0x1F
 #define FPM_PAIRMATCH               0x03
 #define FPM_SETPASSWORD             0x12
+#define FPM_SETADDRESS              0x15
 #define FPM_STANDBY                 0x33
 #define FPM_HANDSHAKE               0x53
 
@@ -215,6 +216,7 @@ class FPM {
         int16_t getFreeIndex(uint8_t page, int16_t * id);
         int16_t matchTemplatePair(uint16_t * score);
         int16_t setPassword(uint32_t pwd);
+        int16_t setAddress(uint32_t addr);
         int16_t getRandomNumber(uint32_t * number);
 
         /* these 3 works only on ZFM60 so far */

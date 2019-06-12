@@ -122,6 +122,21 @@ int16_t FPM::setPassword(uint32_t pwd) {
     return confirm_code;
 }
 
+int16_t FPM::setAddress(uint32_t addr) {
+    buffer[0] = FPM_SETADDRESS;
+    buffer[1] = (addr >> 24) & 0xff; buffer[2] = (addr >> 16) & 0xff;
+    buffer[3] = (addr >> 8) & 0xff; buffer[4] = addr & 0xff;
+    
+    writePacket(FPM_COMMANDPACKET, buffer, 5);
+    uint8_t confirm_code = 0;
+    int16_t rc = read_ack_get_response(&confirm_code);
+    
+    if (rc < 0)
+        return rc;
+    
+    return confirm_code;
+}
+
 int16_t FPM::getImage(void) {
     buffer[0] = FPM_GETIMAGE;
     writePacket(FPM_COMMANDPACKET, buffer, 1);
