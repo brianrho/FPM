@@ -75,6 +75,7 @@
 #define FPM_READTEMPLATEINDEX       0x1F
 #define FPM_PAIRMATCH               0x03
 #define FPM_SETPASSWORD             0x12
+#define FPM_SETADDRESS              0x15
 #define FPM_STANDBY                 0x33
 #define FPM_HANDSHAKE               0x53
 
@@ -184,7 +185,8 @@ class FPM {
         /* 'params' argument is for R308 sensors that must be set manually, make sure to use the defaults above,
            only capacity and packet length are actually relevant */
         bool begin(uint32_t password=FPM_DEFAULT_PASSWORD, uint32_t address=FPM_DEFAULT_ADDRESS, FPM_System_Params * params = NULL);
-        
+
+        bool verifyPassword(uint32_t pwd);
         int16_t getImage(void);
         int16_t image2Tz(uint8_t slot = 1);
         int16_t createModel(void);
@@ -215,6 +217,7 @@ class FPM {
         int16_t getFreeIndex(uint8_t page, int16_t * id);
         int16_t matchTemplatePair(uint16_t * score);
         int16_t setPassword(uint32_t pwd);
+        int16_t setAddress(uint32_t addr);
         int16_t getRandomNumber(uint32_t * number);
 
         /* these 3 work only on ZFM60 so far */
