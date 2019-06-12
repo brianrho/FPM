@@ -75,6 +75,23 @@ bool FPM::begin(uint32_t pwd, uint32_t addr, FPM_System_Params * params) {
     delay(1000);            // 500 ms at least according to datasheet
     
     address = addr;
+    
+    if(!verifyPassword(pwd)) return false;
+
+    manual_settings = false;
+    if (params != NULL) {
+        manual_settings = true;
+        memcpy(&sys_params, params, 16);
+    }
+    else if (readParams() != FPM_OK) {
+        FPM_ERROR_PRINTLN("[+]Read params failed.");
+        return false;
+    }
+    
+    return true;
+}
+
+bool FPM::verifyPassword(uint32_t pwd) {
     password = pwd;
     
     buffer[0] = FPM_VERIFYPASSWORD;
@@ -86,16 +103,6 @@ bool FPM::begin(uint32_t pwd, uint32_t addr, FPM_System_Params * params) {
     
     if (len < 0 || confirm_code != FPM_OK)
         return false;
-
-    manual_settings = false;
-    if (params != NULL) {
-        manual_settings = true;
-        memcpy(&sys_params, params, 16);
-    }
-    else if (readParams() != FPM_OK) {
-        FPM_ERROR_PRINTLN("[+]Read params failed.");
-        return false;
-    }
     
     return true;
 }

@@ -183,7 +183,8 @@ class FPM {
         /* 'params' argument is for R308 sensors that must be set manually, make sure to use the defaults above,
            only capacity and packet length are actually relevant */
         bool begin(uint32_t password=FPM_DEFAULT_PASSWORD, uint32_t address=FPM_DEFAULT_ADDRESS, FPM_System_Params * params = NULL);
-        
+
+        bool verifyPassword(uint32_t pwd);
         int16_t getImage(void);
         int16_t image2Tz(uint8_t slot = 1);
         int16_t createModel(void);
