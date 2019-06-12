@@ -647,7 +647,8 @@ int16_t FPM::getReply(uint8_t * replyBuf, uint16_t buflen, uint8_t * pktid, Stre
                 
                 if (addr != address) {
                     state = FPM_STATE_READ_HEADER;
-                    FPM_ERROR_PRINTLN("[+]Wrong address");
+                    FPM_ERROR_PRINT("[+]Wrong address: 0x");
+                    FPM_ERROR_HEXLN(addr);
                     break;
                 }
                 
@@ -680,7 +681,8 @@ int16_t FPM::getReply(uint8_t * replyBuf, uint16_t buflen, uint8_t * pktid, Stre
                 
                 if (length > FPM_MAX_PACKET_LEN + 2 || (outStream == NULL && length > buflen + 2)) {
                     state = FPM_STATE_READ_HEADER;
-                    FPM_ERROR_PRINTLN("[+]Packet too long");
+                    FPM_ERROR_PRINT("[+]Packet too long: ");
+                    FPM_ERROR_DECLN(length);
                     continue;
                 }
                 
@@ -731,7 +733,8 @@ int16_t FPM::getReply(uint8_t * replyBuf, uint16_t buflen, uint8_t * pktid, Stre
                 
                 if (to_check != chksum) {
                     state = FPM_STATE_READ_HEADER;
-                    FPM_ERROR_PRINTLN("\r\n[+]Wrong chksum");
+                    FPM_ERROR_PRINT("\r\n[+]Wrong chksum: 0x");
+                    FPM_ERROR_HEXLN(to_check);
                     continue;
                 }
                 

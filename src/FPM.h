@@ -15,7 +15,8 @@
    uncomment this line if you have one of those */
 //#define FPM_R551_MODULE
 
-/* 0: Disabled
+/* Set the debug level
+   0: Disabled
    1: Errors only
    2: Everything
  */
@@ -216,17 +217,18 @@ class FPM {
         int16_t setPassword(uint32_t pwd);
         int16_t getRandomNumber(uint32_t * number);
 
-        /* these 3 works only on ZFM60 so far */
+        /* these 3 work only on ZFM60 so far */
         int16_t led_on(void);
         int16_t led_off(void);
         int16_t getImageNL(void);
         
-        /* tested on R551 modules,
+        /* tested on R551 sensors (by user [xsrf]),
            standby current measured at 10uA, UART and LEDs turned off,
            no other documentation available */
         int16_t standby(void);
 
-        /* NEW: not tested yet. Should return true if the sensor is ready to accept commands */
+        /* NEW: found in Z70 sensor datasheet but not tested yet. 
+           Should return true if the sensor is ready to accept commands */
         bool handshake(void);
         
         static const uint16_t packet_lengths[];
