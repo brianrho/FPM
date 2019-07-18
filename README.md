@@ -1,7 +1,7 @@
 This is an Arduino library for most of the FPMxx/R30x/ZFMxx/R551 optical fingerprint sensors.\
 (*See note below.*)
 
-Included are a Python script and a Windows executable for extracting fingerprint images to a PC; 
+Included is a Python 3 script for extracting fingerprint images to a PC; 
 the `image_to_pc` example must first be uploaded to the Arduino. \
 For optimal reliability, baud rates <= 57600 are recommended regarding `SoftwareSerial` usage, 
 especially when retrieving fingerprint images. 
