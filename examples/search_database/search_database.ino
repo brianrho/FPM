@@ -98,14 +98,6 @@ int search_database(void) {
             return p;
     }
 
-    Serial.println("Remove finger");
-    p = 0;
-    while (p != FPM_NOFINGER) {
-        p = finger.getImage();
-        yield();
-    }
-    Serial.println();
-
     /* search the database for the converted print */
     uint16_t fid, score;
     p = finger.searchDatabase(&fid, &score);
