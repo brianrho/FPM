@@ -187,6 +187,23 @@ int16_t FPM::led_off(void) {
     
     return confirm_code;
 }
+/* tested with R503 modules only */
+int16_t FPM::led_control(uint8_t control_code, uint8_t speed, uint8_t color_idx, uint8_t times) {
+    buffer[0] = FPM_LED_CONTROL;
+    buffer[1] = control_code;
+    buffer[2] = speed;
+    buffer[3] = color_idx;
+    buffer[4] = times;
+    
+    writePacket(FPM_COMMANDPACKET, buffer, 5);
+    uint8_t confirm_code = 0;
+    int16_t rc = read_ack_get_response(&confirm_code);
+
+    if (rc < 0)
+        return rc;
+
+    return confirm_code;
+}    
 
 int16_t FPM::standby(void) {
     buffer[0] = FPM_STANDBY;
