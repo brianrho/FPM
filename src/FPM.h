@@ -81,6 +81,7 @@
 
 #define FPM_LEDON                   0x50
 #define FPM_LEDOFF                  0x51
+#define FPM_LED_CONTROL             0x35
 #define FPM_GETIMAGE_NOLIGHT        0x52
 #define FPM_GETRANDOM               0x14
 
@@ -224,6 +225,9 @@ class FPM {
         int16_t led_on(void);
         int16_t led_off(void);
         int16_t getImageNL(void);
+  
+        /* tested on R503 sensors */
+        int16_t led_control(uint8_t control_code, uint8_t speed, uint8_t color_idx, uint8_t times);
         
         /* tested on R551 sensors (by user [xsrf]),
            standby current measured at 10uA, UART and LEDs turned off,
