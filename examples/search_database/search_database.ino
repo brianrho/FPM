@@ -101,6 +101,16 @@ int search_database(void) {
     /* search the database for the converted print */
     uint16_t fid, score;
     p = finger.searchDatabase(&fid, &score);
+    
+    /* now wait to remove the finger, though not necessary; 
+       this was moved here after the search because of the R503 sensor, 
+       which seems to wipe its buffers after each scan */
+    Serial.println("Remove finger");
+    while (finger.getImage() != FPM_NOFINGER) {
+        delay(500);
+    }
+    Serial.println();
+    
     if (p == FPM_OK) {
         Serial.println("Found a print match!");
     } else if (p == FPM_PACKETRECIEVEERR) {
