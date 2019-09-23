@@ -87,8 +87,8 @@ def getPrint():
     try:
         # open the port; timeout is 1 sec; also resets the arduino
         ser = serial.Serial(portSettings[0], portSettings[1], timeout=1)
-    except Exception:
-        print('Invalid port settings!')
+    except Exception as e:
+        print('Invalid port settings:', e)
         print()
         out.close()
         return
@@ -124,7 +124,7 @@ def getPrint():
             print()
             return True
         except Exception as e:
-            print("ERROR: ", e)
+            print("Read failed: ", e)
             out.close()
             ser.close()
             return False
