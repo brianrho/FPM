@@ -6,9 +6,9 @@ the `image_to_pc` example must first be uploaded to the Arduino. \
 For optimal reliability, baud rates <= 57600 are recommended regarding `SoftwareSerial` usage, 
 especially when retrieving fingerprint images. 
 
-Datasheet found [here](https://sicherheitskritisch.de/files/specifications-2.0-en.pdf).\
+A generic list of commands for these sensors can be found [here](https://usermanual.wiki/Document/Fingerprintusermanual.1754127921/view). Keep in mind that not all sensors (few, really) support all commands. You'll just have to try them out for yourself.\
 To match templates on your PC/server, check [here](https://github.com/brianrho/fpmatch).\
-A generic version of this [library in C](https://github.com/brianrho/FPM-C).\
+A device-agnostic version of this [library in C](https://github.com/brianrho/FPM-C).\
 An Arduino library for the [GT511C3 (and similar GT5x) fingerprint sensors](https://github.com/brianrho/GT5X).\
 \
 **Note**: 
