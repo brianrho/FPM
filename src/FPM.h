@@ -78,6 +78,7 @@
 #define FPM_SETADDRESS              0x15
 #define FPM_STANDBY                 0x33
 #define FPM_HANDSHAKE               0x53
+#define FPM_READPRODINFO            0x3C // newer models such as R503
 
 #define FPM_LEDON                   0x50
 #define FPM_LEDOFF                  0x51
@@ -95,8 +96,8 @@
 #define FPM_MAX_PACKET_LEN          256
 #define FPM_PKT_OVERHEAD_LEN        12
 
-/* 32 is max packet length for ACKed commands, +1 for confirmation code */
-#define FPM_BUFFER_SZ               (32 + 1)
+/* 58 is max packet length for ACKed commands (read prod info) */
+#define FPM_BUFFER_SZ               (58)
 
 /* default timeout is 2 seconds */
 #define FPM_DEFAULT_TIMEOUT         2000
@@ -220,6 +221,7 @@ class FPM {
         int16_t setPassword(uint32_t pwd);
         int16_t setAddress(uint32_t addr);
         int16_t getRandomNumber(uint32_t * number);
+        int16_t getSerialNumber(uint8_t * serialNumber); // newer models such as R503
 
         /* these 3 work only on ZFM60 so far */
         int16_t led_on(void);
