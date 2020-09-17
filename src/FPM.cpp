@@ -608,6 +608,24 @@ int16_t FPM::getRandomNumber(uint32_t * number) {
     return confirm_code;
 }
 
+int16_t FPM::getSerialNumber(uint8_t * serialNumber) {
+    buffer[0] = FPM_READPRODINFO;
+    writePacket(FPM_COMMANDPACKET, buffer, 1);
+    uint8_t confirm_code = 0;
+    
+    int16_t len = read_ack_get_response(&confirm_code);
+    
+    if (len < 0)
+        return len;
+    
+    if (confirm_code != FPM_OK)
+        return confirm_code;
+    
+    memcpy(serialNumber, buffer+20, 8);
+
+    return confirm_code;
+}
+
 bool FPM::handshake(void) {
     buffer[0] = FPM_HANDSHAKE;
     writePacket(FPM_COMMANDPACKET, buffer, 1);
