@@ -1,11 +1,3 @@
-/*
- Copyright (C) 2011 J. Coliz <maniacbug@ymail.com>
- This program is free software; you can redistribute it and/or
- modify it under the terms of the GNU General Public License
- version 2 as published by the Free Software Foundation.
- */
-/*  Galileo support from spaniakos <spaniakos@gmail.com> */
-
 /**
  * @file fpm_logging.h
  *
@@ -20,14 +12,16 @@
 
 #define FPM_LOG_LEVEL_SILENT                0
 #define FPM_LOG_LEVEL_ERROR                 1
-#define FPM_LOG_LEVEL_VERBOSE               2
+#define FPM_LOG_LEVEL_INFO                  2
+#define FPM_LOG_LEVEL_VERBOSE               3
+#define FPM_LOG_LEVEL_V_VERBOSE             4
 
 /* Set this macro to any one of the log levels above,
  * arranged in order of increasing verbosity
  *
  * Note: setting FPM_LOG_LEVEL_VERBOSE may cause sensor data transfers to fail, especially at high baud rates
  */
-#define FPM_LOG_LEVEL                       FPM_LOG_LEVEL_ERROR
+#define FPM_LOG_LEVEL                       FPM_LOG_LEVEL_INFO
 
 #if (FPM_LOG_LEVEL != FPM_LOG_LEVEL_SILENT)
 
@@ -35,44 +29,49 @@
                 do { if (level <= FPM_LOG_LEVEL) printf(fmt, ##__VA_ARGS__); } while (0)
 
     #define FPM_LOGLN(level, fmt, ...) \
-                do { if (level <= FPM_LOG_LEVEL) printf(fmt"\r\n", ##__VA_ARGS__); } while (0)
+                do { if (level <= FPM_LOG_LEVEL) printf("[+]" fmt "\r\n", ##__VA_ARGS__); } while (0)
                 
     #define FPM_LOG_ERROR(fmt, ...)             FPM_LOG(FPM_LOG_LEVEL_ERROR, fmt, ##__VA_ARGS__)
+    #define FPM_LOG_INFO(fmt, ...)              FPM_LOG(FPM_LOG_LEVEL_INFO, fmt, ##__VA_ARGS__)
     #define FPM_LOG_VERBOSE(fmt, ...)           FPM_LOG(FPM_LOG_LEVEL_VERBOSE, fmt, ##__VA_ARGS__)
+    #define FPM_LOG_V_VERBOSE(fmt, ...)         FPM_LOG(FPM_LOG_LEVEL_V_VERBOSE, fmt, ##__VA_ARGS__)
 
     #define FPM_LOGLN_ERROR(fmt, ...)           FPM_LOGLN(FPM_LOG_LEVEL_ERROR, fmt, ##__VA_ARGS__)
+    #define FPM_LOGLN_INFO(fmt, ...)            FPM_LOGLN(FPM_LOG_LEVEL_INFO, fmt, ##__VA_ARGS__)
     #define FPM_LOGLN_VERBOSE(fmt, ...)         FPM_LOGLN(FPM_LOG_LEVEL_VERBOSE, fmt, ##__VA_ARGS__)
+    #define FPM_LOGLN_V_VERBOSE(fmt, ...)       FPM_LOGLN(FPM_LOG_LEVEL_V_VERBOSE, fmt, ##__VA_ARGS__)
 
-    #if defined(ARDUINO_ARCH_AVR) || defined(__ARDUINO_X86__)
-
-    int serial_putc(char c, FILE *)
+    #if defined(ARDUINO_ARCH_AVR)
+    
+    #include <Arduino.h>
+                                             
+    static int uart_putchar(char c, FILE *stream)
     {
         Serial.write(c);
-        return c;
+        return 0;
     }
-    #endif
-
+    
+    #endif    
+    
     void printf_begin(void)
     {
-        #if defined(ARDUINO_ARCH_AVR)
-        fdevopen(&serial_putc, 0);
-
-        #elif defined(__ARDUINO_X86__)
-        // JESUS - For reddirect stdout to /dev/ttyGS0 (Serial Monitor port)
-        stdout = freopen("/dev/ttyGS0", "w", stdout);
-        delay(500);
-        printf("Redirecting to Serial...");
-        #endif // defined(__ARDUINO_X86__)
-    }
+    #if defined(ARDUINO_ARCH_AVR)
+        fdevopen(&uart_putchar, NULL);
+    #endif
+    }                                 
 
 #else
 
     #define FPM_LOG_ERROR(fmt, ...)
+    #define FPM_LOG_INFO(fmt, ...)
     #define FPM_LOG_VERBOSE(fmt, ...)
+    #define FPM_LOG_V_VERBOSE(fmt, ...)
 
     #define FPM_LOGLN_ERROR(fmt, ...)
+    #define FPM_LOGLN_INFO(fmt, ...)
     #define FPM_LOGLN_VERBOSE(fmt, ...)
+    #define FPM_LOGLN_V_VERBOSE(fmt, ...)
 
 #endif  /* (FPM_LOG_LEVEL != FPM_LOG_LEVEL_SILENT) */
 
-#endif // __PRINTF_H__
+#endif
