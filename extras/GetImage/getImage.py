@@ -109,9 +109,11 @@ def getPrint():
                     out.close()  # close port and file
                     ser.close()
                     return False
-                # make each nibble a high nibble
-                out.write((byte[0] & 0xf0).to_bytes(1, byteorder='little'))
-                out.write(((byte[0] & 0x0f) << 4).to_bytes(1, byteorder='little'))
+                    
+                # Since each received byte contains info for 2 adjacent pixels,
+                # assume that both pixels were originally close enough in colour
+                # to now be assigned the same colour
+                out.write(byte * 2)
                 
             out.close()  # close file
             print('Image saved as', out.name)
