@@ -26,7 +26,7 @@ Despite that, you may still encounter problems, especially with more advanced fu
 
 * If you have an ESP32, the `enroll` example already shows how to setup the `HardwareSerial` ports, so this is basically clearer repetition:
 
-```c_cpp
+```cpp
 #include <HardwareSerial.h>
 #include <fpm.h>
 
