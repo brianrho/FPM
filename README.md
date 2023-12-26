@@ -5,7 +5,12 @@ This is an Arduino library for most of the FPMxx/R30x/ZFMxx/R551 optical fingerp
 There are several examples included to demonstrate usage -- the `enroll` example is a great place to start, especially if you have an ESP32.\
 (This is because ESP32 requires usage of its `HardwareSerial` ports, since the Arduino ESP32 core doesn't support `SoftwareSerial`. The `enroll` example shows how to setup those ports, guarded under the macro `ARDUINO_ARCH_ESP32`.)
 
-Also included is a Python 3 script for extracting fingerprint images to a PC over a Virtual COM port; the `image_to_pc` example must first be uploaded to the Arduino. To get the most reliability with `SoftwareSerial`, baud rates should not exceed 57600, especially when retrieving fingerprint images. *(This limit is based off tests with an Arduino Uno -- more powerful chips like the ESPxxxx may be able to handle higher rates just fine.)*
+Also included is a Python 3 script for extracting fingerprint images to a PC over a Virtual COM port. To use it:
+- The `image_to_pc` example must first be uploaded to the Arduino, which is connected to the sensor. 
+- The script requires the `pyserial` Python package, so you need to install that first with `pip3 install pyserial` on your command line.
+- Run `python3 getImage.py -h` to see general usage help. (For instance, usage on Windows could look like this: `python3 getImage.py COM3 57600 print.bmp`)
+
+To get the most reliability with `SoftwareSerial`, baud rates should not exceed 57600, especially during sustained data transfers e.g. extracting fingerprint images. *(This recommendation is based off old tests with an Arduino Uno -- more powerful chips like the ESPxxxx may be able to handle higher rates just fine. Test and find out.)*
 
 A generic list of commands for these sensors can be found [here](https://usermanual.wiki/Document/Fingerprintusermanual.1754127921/view). Keep in mind that not all sensors (few, really) support all commands. You'll just have to try them out for yourself.\
 To match templates on your PC/server, check [here](https://github.com/brianrho/fpmatch).\
@@ -21,7 +26,7 @@ Despite that, you may still encounter problems, especially with more advanced fu
 
 * If you have an ESP32, the `enroll` example already shows how to setup the `HardwareSerial` ports, so this is basically clearer repetition:
 
-```
+```c_cpp
 #include <HardwareSerial.h>
 #include <fpm.h>
 
