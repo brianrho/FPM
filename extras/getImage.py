@@ -118,6 +118,8 @@ if __name__ == "__main__":
     parser.add_argument("baudRate", type=int, help="Baud rate (e.g. 57600)")
     parser.add_argument("outputFileName", help="Output image file name or path (should end with .bmp)")
     
+    # e.g. python3 getImage.py COM3 57600 print.bmp
+    
     args = parser.parse_args()
     
     getFingerprintImage(args.portNum, args.baudRate, args.outputFileName)

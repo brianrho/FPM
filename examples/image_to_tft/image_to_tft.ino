@@ -41,7 +41,7 @@ char printfBuf[PRINTF_BUF_SZ];
 #define IMAGE_WIDTH     256
 #define IMAGE_HEIGHT    288
 
-/*  The scaling ((mult/div)^2) applied to the image area, when drawing it.
+/*  The scaling ((mult/div)^2) applied to the original image area, when drawing it.
     e.g. When mult == 1 and div == 2, the drawn image will occupy IMAGE_WIDTH/2 by IMAGE_HEIGHT/2 pixels on the display,
     always preserving the aspect ratio.
 
@@ -53,7 +53,7 @@ char printfBuf[PRINTF_BUF_SZ];
 #define IMAGE_SCALING_MULT  3
 #define IMAGE_SCALING_DIV   4
 
-/* Very dark green for the background */
+/* Dark green for the background */
 const uint16_t BG_COLOUR = tft.color565(0, 25, 0);
 
 /*  Define a special kind of Stream which writes to the TFT directly,
