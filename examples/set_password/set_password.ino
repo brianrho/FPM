@@ -1,82 +1,99 @@
 #include <SoftwareSerial.h>
-#include <FPM.h>
+#include <fpm.h>
 
-/* Set module password 
+/* Set the sensor password
  *
- * WARNING!!! DO NOT RUN THIS UNLESS YOU KNOW EXACTLY WHAT YOU'RE DOING.
- * RUNNING THIS SKETCH WILL CHANGE THE PASSWORD OF YOUR SENSOR.
- * YOU WILL BE UNABLE TO TALK TO THE SENSOR UNLESS YOU USE THE NEW PASSWORD
- * IN FUTURE begin() CALLS AS SHOWN BELOW.
+ * WARNING: Changing the password of your sensor is Serious Business.
+ *          Run this sketch only if you know what you're doing.
+ *
+ * This command is not supported on R308 sensors.
  */
-
-/*  pin #2 <= sensor TX
-    pin #3 => sensor RX
-*/
+ 
+/*  pin #2 is Arduino RX <==> Sensor TX
+ *  pin #3 is Arduino TX <==> Sensor RX
+ */
 SoftwareSerial fserial(2, 3);
 
 FPM finger(&fserial);
-FPM_System_Params params;
+FPMSystemParams params;
 
-uint32_t new_password = 0x12345678;
+/* for convenience */
+#define PRINTF_BUF_SZ   40
+char printfBuf[PRINTF_BUF_SZ];
 
 void setup()
 {
-    Serial.begin(9600);
-    Serial.println("SET PASSWORD test");
+    Serial.begin(57600);
     fserial.begin(57600);
+    
+    Serial.println("SET_PASSWORD example");
 
-    if (finger.begin()) {
+    if (finger.begin()) 
+    {
         finger.readParams(&params);
         Serial.println("Found fingerprint sensor!");
         Serial.print("Capacity: "); Serial.println(params.capacity);
-        Serial.print("Packet length: "); Serial.println(FPM::packet_lengths[params.packet_len]);
-    }
-    else {
+        Serial.print("Packet length: "); Serial.println(FPM::packetLengths[static_cast<uint8_t>(params.packetLen)]);
+    } 
+    else 
+    {
         Serial.println("Did not find fingerprint sensor :(");
         while (1) yield();
     }
 }
 
-void loop()
+void loop() 
 {
-    while (Serial.read() != -1);
-    Serial.print("Send any character to set the module password to 0x");
-    Serial.println(new_password, HEX);
-
+    /* Change this to any value you like */
+    const uint32_t newPassword = 0x00000000;
+    
+    Serial.print("\r\nSend any character to set the sensor password to 0x");
+    Serial.println(newPassword, HEX);
+    
     while (Serial.available() == 0) yield();
-
-    if (!set_pwd(new_password)) {
-        Serial.println("Failed to set password!");
-        return;
+    
+    if (setPassword(newPassword))
+    {
+        /* Restarting the sensor is recommended. */       
+        Serial.println("\r\nYou may need to restart your sensor and Arduino.\r\nTesting new password...\r\n");
+        
+        /* Just in case */
+        delay(1000);
+        
+        if (finger.begin()) 
+        {
+            finger.readParams(&params);
+            Serial.println("Found fingerprint sensor!");
+            Serial.print("Capacity: "); Serial.println(params.capacity);
+            Serial.print("Packet length: "); Serial.println(FPM::packetLengths[static_cast<uint8_t>(params.packetLen)]);
+        }
+        else 
+        {
+            Serial.println("Did not find fingerprint sensor :(");
+            while (1) yield();
+        }
     }
-
-    delay(1000);
-    Serial.print("New password: 0x"); Serial.println(new_password);
-    Serial.println("Testing new password by calling begin() again");
-    if (finger.begin(new_password)) {
-        finger.readParams(&params);
-        Serial.println("Found fingerprint sensor!");
-        Serial.print("Capacity: "); Serial.println(params.capacity);
-        Serial.print("Packet length: "); Serial.println(FPM::packet_lengths[params.packet_len]);
-    }
-    else {
-        Serial.println("Did not find fingerprint sensor :(");
-        while (1) yield();
-    }
+    
+    while (Serial.read() != -1);
 }
 
-bool set_pwd(uint32_t pwd) {
-    int16_t ret = finger.setPassword(pwd);
-    switch (ret) {
-        case FPM_OK:
-            Serial.println("Password changed successfully. Will take hold next time you call begin().");
+
+bool setPassword(uint32_t password) 
+{   
+    FPMStatus status = finger.setPassword(password);
+    
+    switch (status) 
+    {
+        case FPMStatus::OK:
+            snprintf(printfBuf, PRINTF_BUF_SZ, "Password set to 0x%08lX successfully.", password);
+            Serial.println(printfBuf);
             break;
-        case FPM_PACKETRECIEVEERR:
-            Serial.println("Comms error!");
-            break;
+            
         default:
-            Serial.println("Unknown error");
-            break;
+            snprintf(printfBuf, PRINTF_BUF_SZ, "setPassword(): error 0x%X", static_cast<uint16_t>(status));
+            Serial.println(printfBuf);
+            return false;
     }
-    return (ret == FPM_OK);
+
+    return true;
 }

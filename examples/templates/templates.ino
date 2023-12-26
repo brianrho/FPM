@@ -1,217 +1,268 @@
 #include <SoftwareSerial.h>
-#include <FPM.h>
+#include <fpm.h>
 
-/* Read, delete and move a fingerprint template within the database */
+/* Read, delete and write a fingerprint template into the database:
+ * 
+ * A template will be moved from one location in the database to another --
+ * by first reading it from its initial location into a buffer, 
+ * deleting it from that location, and then writing it from the buffer to its new location.
+ * 
+ */
 
-/*  pin #2 is IN from sensor (GREEN wire)
-    pin #3 is OUT from arduino  (WHITE/YELLOW wire)
-*/
+/*  pin #2 is Arduino RX <==> Sensor TX
+ *  pin #3 is Arduino TX <==> Sensor RX
+ */
 SoftwareSerial fserial(2, 3);
 
 FPM finger(&fserial);
-FPM_System_Params params;
+FPMSystemParams params;
 
-/* this should be equal to the template size for your sensor but
- * some sensors have 512-byte templates while others have template sizes as
- * high as 1024 bytes. So check the printed result of read_template()
- * to determine the case for your module and adjust the needed buffer
- * size below accordingly. If it doesn't work at first, try increasing
- * this value to 1024
+/* for convenience */
+#define PRINTF_BUF_SZ   60
+char printfBuf[PRINTF_BUF_SZ];
+
+/* This should be equal to the template size for your sensor,
+ * which can be anywhere from 512 to 1536 bytes.
+ * 
+ * So check the printed result of readTemplate() to determine 
+ * the correct template size for your sensor and adjust the buffer
+ * size below accordingly. If this example doesn't work at first, try increasing
+ * this value, provided you have sufficient RAM.
  */
-#define BUFF_SZ     768
-
-uint8_t template_buffer[BUFF_SZ];
+#define TEMPLATE_SZ         512
+uint8_t template_buffer[TEMPLATE_SZ];
 
 void setup()
 {
-    Serial.begin(9600);
-    Serial.println("TEMPLATES test");
+    Serial.begin(57600);
     fserial.begin(57600);
+    
+    Serial.println("TEMPLATES example");
 
     if (finger.begin()) {
         finger.readParams(&params);
         Serial.println("Found fingerprint sensor!");
         Serial.print("Capacity: "); Serial.println(params.capacity);
-        Serial.print("Packet length: "); Serial.println(FPM::packet_lengths[params.packet_len]);
-    } else {
+        Serial.print("Packet length: "); Serial.println(FPM::packetLengths[static_cast<uint8_t>(params.packetLen)]);
+    } 
+    else {
         Serial.println("Did not find fingerprint sensor :(");
         while (1) yield();
-    }
+    }    
 }
 
 void loop()
 {
-    Serial.println("Enter the template ID # you want to get...");
-    int16_t fid = 0;
+    Serial.println(F("\r\nEnter the template ID # you want to move..."));
+    uint16_t fid = getIDInput();
+
+    /* read the template from its location into the buffer */
+    uint16_t totalRead = readTemplate(fid, template_buffer, TEMPLATE_SZ);
+    if (!totalRead) return;
+
+    /* delete it from that location */
+    deleteTemplate(fid);
+
+    Serial.println(F("Enter the template's new ID #..."));
+    uint16_t new_fid = getIDInput();
+    
+    /* write the template from the buffer into its new location */
+    writeTemplate(new_fid, template_buffer, totalRead);
+}
+
+uint16_t getIDInput(void)
+{
+    /* clear the Serial RX buffer */
     while (Serial.read() != -1);
-    while (true) {
+    
+    uint16_t fid = 0;
+    
+    while (true) 
+    {
         while (! Serial.available()) yield();
         char c = Serial.read();
         if (! isdigit(c)) break;
+        
         fid *= 10;
         fid += c - '0';
         yield();
     }
-
-    /* read the template from its location into the buffer */
-    uint16_t total_read = read_template(fid, template_buffer, BUFF_SZ);
-    if (!total_read)
-        return;
-
-    /* delete it from that location */
-    delete_template(fid);
-
-    Serial.println("Enter the template's new ID...");
-    int16_t new_id = 0;
-
-    while (Serial.read() != -1);
-    while (true) {
-        while (! Serial.available()) yield();
-        char c = Serial.read();
-        if (! isdigit(c)) break;
-        new_id *= 10;
-        new_id += c - '0';
-        yield();
-    }
-
-    /* copy it from the buffer to its new location */
-    move_template(new_id, template_buffer, total_read);
+    
+    return fid;
 }
 
-uint16_t read_template(uint16_t fid, uint8_t * buffer, uint16_t buff_sz)
+uint16_t readTemplate(uint16_t fid, uint8_t * buffer, uint16_t bufLen)
 {
-    int16_t p = finger.loadModel(fid);
-    switch (p) {
-        case FPM_OK:
+    /* Load the template from the sensor's storage into one of its Buffers
+     * (Buffer 1 by default) */
+    FPMStatus status = finger.loadTemplate(fid);
+    
+    switch (status) 
+    {
+        case FPMStatus::OK:
             Serial.print("Template "); Serial.print(fid); Serial.println(" loaded");
             break;
-        case FPM_PACKETRECIEVEERR:
-            Serial.println("Communication error");
-            return 0;
-        case FPM_DBREADFAIL:
-            Serial.println("Invalid template");
-            return 0;
+            
+        case FPMStatus::DBREADFAIL:
+            Serial.println(F("Invalid template or location"));
+            return false;
+            
         default:
-            Serial.print("Unknown error: "); Serial.println(p);
-            return 0;
+            snprintf_P(printfBuf, PRINTF_BUF_SZ, PSTR("loadTemplate(%d): error 0x%X"), fid, static_cast<uint16_t>(status));
+            Serial.println(printfBuf);
+            return false;
     }
-
-    // OK success!
-
-    p = finger.downloadModel();
-    switch (p) {
-        case FPM_OK:
+    
+    /* Inform the sensor that we're about to download a template from that Buffer */
+    status = finger.downloadTemplate();
+    switch (status) 
+    {
+        case FPMStatus::OK:
             break;
+            
         default:
-            Serial.print("Unknown error: "); Serial.println(p);
-            return 0; 
+            snprintf_P(printfBuf, PRINTF_BUF_SZ, PSTR("downloadTemplate(%d): error 0x%X"), fid, static_cast<uint16_t>(status));
+            Serial.println(printfBuf);
+            return false; 
     }
+    
+    /* Now, the sensor will send us the template from that Buffer, one packet at a time */
+    bool readComplete = false;
+    
+    /* As an argument, this holds the max number of bytes to read from the sensor.
+     * Whenever the function returns successfully, it then holds the number of bytes actually read. */
+    uint16_t readLen = bufLen;
+    
+    uint16_t bufPos = 0;
 
-    bool read_finished;
-    int16_t count = 0;
-    uint16_t readlen = buff_sz;
-    uint16_t pos = 0;
-
-    while (true) {
-        bool ret = finger.readRaw(FPM_OUTPUT_TO_BUFFER, buffer + pos, &read_finished, &readlen);
-        if (ret) {
-            count++;
-            pos += readlen;
-            readlen = buff_sz - pos;
-            if (read_finished)
-                break;
-        }
-        else {
-            Serial.print("Error receiving packet ");
-            Serial.println(count);
+    while (!readComplete) 
+    {
+        bool ret = finger.readDataPacket(buffer + bufPos, NULL, &readLen, &readComplete);
+        
+        if (!ret)
+        {
+            snprintf_P(printfBuf, PRINTF_BUF_SZ, PSTR("readDataPacket(): failed after reading %u bytes"), bufPos);
+            Serial.println(printfBuf);
             return 0;
         }
+        
+        bufPos += readLen;
+        readLen = bufLen - bufPos;
+        
         yield();
     }
     
-    uint16_t total_bytes = count * FPM::packet_lengths[params.packet_len];
+    uint16_t totalBytes = bufPos;
     
     /* just for pretty-printing */
-    uint16_t num_rows = total_bytes / 16;
+    uint16_t numRows = totalBytes / 16;
     
-    Serial.println("Printing template:");
-    Serial.println("---------------------------------------------");
-    for (int row = 0; row < num_rows; row++) {
+    Serial.println(F("Printing template:"));
+    const char * dashes = "---------------------------------------------";
+    Serial.println(dashes);
+    
+    for (int row = 0; row < numRows; row++) {
         for (int col = 0; col < 16; col++) {
             Serial.print(buffer[row * 16 + col], HEX);
             Serial.print(" ");
         }
+        
         Serial.println();
         yield();
     }
-    Serial.println("--------------------------------------------");
+    
+    Serial.println(dashes);
 
-    Serial.print(total_bytes); Serial.println(" bytes read.");
-    return total_bytes;
+    Serial.print(totalBytes); Serial.println(" bytes read.");
+    return totalBytes;
 }
 
-void delete_template(uint16_t fid) {
-    int16_t p = finger.deleteModel(fid);
-    switch (p) {
-        case FPM_OK:
-            Serial.print("Template "); Serial.print(fid); Serial.println(" deleted");
+bool deleteTemplate(int fid) 
+{
+    FPMStatus status = finger.deleteTemplate(fid);
+    
+    switch (status) 
+    {
+        case FPMStatus::OK:
+            snprintf_P(printfBuf, PRINTF_BUF_SZ, PSTR("Deleted ID #%u."), fid);
+            Serial.println(printfBuf);
             break;
-        case FPM_PACKETRECIEVEERR:
-            Serial.println("Comms error");
-            break;
-        case FPM_BADLOCATION:
-            Serial.println("Could not delete from that location");
-            break;
-        case FPM_FLASHERR:
-            Serial.println("Error writing to flash");
-            break;
+            
+        case FPMStatus::DELETEFAIL:
+            snprintf_P(printfBuf, PRINTF_BUF_SZ, PSTR("Failed to delete ID #%u."), fid);
+            Serial.println(printfBuf);
+            return false;
+            
         default:
-            Serial.print("Unknown error: "); 
-            Serial.println(p);
-            break;
+            snprintf_P(printfBuf, PRINTF_BUF_SZ, PSTR("deleteTemplate(): error 0x%X"), static_cast<uint16_t>(status));
+            Serial.println(printfBuf);
+            return false;
     }
-    return;
+    
+    return true;
 }
 
-void move_template(uint16_t fid, uint8_t * buffer, uint16_t to_write) {
-    int16_t p = finger.uploadModel();
-    switch (p) {
-        case FPM_OK:
-            Serial.println("Starting template upload");
+bool writeTemplate(uint16_t fid, uint8_t * buffer, uint16_t templateSz) 
+{
+    /* Inform the sensor that we're about to upload a template to one of its Buffers
+     * (Buffer 1 by default) */
+    FPMStatus status = finger.uploadTemplate();
+    
+    switch (status) 
+    {
+        case FPMStatus::OK:
+            Serial.println("Starting template upload...");
             break;
-        case FPM_PACKETRECIEVEERR:
-            Serial.println("Comms error");
-            return;
-        case FPM_PACKETRESPONSEFAIL:
-            Serial.println("Did not receive packet");
-            return;
+            
         default:
-            Serial.print("Unknown error: "); 
-            Serial.println(p);
-            return;
+            snprintf_P(printfBuf, PRINTF_BUF_SZ, PSTR("uploadTemplate(%u): error 0x%X"), fid, static_cast<uint16_t>(status));
+            Serial.println(printfBuf);
+            return false; 
     }
+    
+    /* One packet at a time, upload the template to that Buffer */
+    uint16_t writeLen = templateSz;
+    uint16_t written = 0;
+    const uint16_t PACKET_LENGTH = FPM::packetLengths[static_cast<uint8_t>(params.packetLen)];
+    
+    while (writeLen)
+    {
+        /* the write is completed when we have no more than PACKET_LENGTH left to write */
+        bool ret = finger.writeDataPacket(buffer + written, NULL, &writeLen, writeLen <= PACKET_LENGTH);
+        
+        if (!ret)
+        {
+            snprintf_P(printfBuf, PRINTF_BUF_SZ, PSTR("writeDataPacket(): failed after writing %u bytes"), written);
+            Serial.println(printfBuf);
+            return false;
+        }
+        
+        written += writeLen;
+        writeLen = templateSz - written;
+        
+        yield();
+    }
+    
+    /* Finally, store the template at the specified location */
+    status = finger.storeTemplate(fid);
 
-    yield();
-    finger.writeRaw(buffer, to_write);
-
-    p = finger.storeModel(fid);
-    switch (p) {
-        case FPM_OK:
-            Serial.print("Template moved to ID "); Serial.println(fid);
+    switch (status)
+    {
+        case FPMStatus::OK:
+            snprintf_P(printfBuf, PRINTF_BUF_SZ, PSTR("Template stored at ID %d!"), fid);
+            Serial.println(printfBuf);
             break;
-        case FPM_PACKETRECIEVEERR:
-            Serial.println("Comms error");
-            break;
-        case FPM_BADLOCATION:
-            Serial.println("Could not store in that location");
-            break;
-        case FPM_FLASHERR:
-            Serial.println("Error writing to flash");
-            break;
+            
+        case FPMStatus::BADLOCATION:
+            snprintf_P(printfBuf, PRINTF_BUF_SZ, PSTR("Could not store in that location %d!"), fid);
+            Serial.println(printfBuf);
+            return false;
+            
         default:
-            Serial.print("Unknown error: "); 
-            Serial.println(p);
-            break;
+            snprintf_P(printfBuf, PRINTF_BUF_SZ, PSTR("storeModel(%u): error 0x%X"), fid, static_cast<uint16_t>(status));
+            Serial.println(printfBuf);
+            return false;
     }
-    return;
+    
+    return true;
 }

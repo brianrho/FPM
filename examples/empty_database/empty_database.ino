@@ -1,58 +1,70 @@
 #include <SoftwareSerial.h>
-#include <FPM.h>
+#include <fpm.h>
 
 /* Empty fingerprint database */
 
-/*  pin #2 is IN from sensor (GREEN wire)
-    pin #3 is OUT from arduino  (WHITE/YELLOW wire)
-*/
+/*  pin #2 is Arduino RX <==> Sensor TX
+ *  pin #3 is Arduino TX <==> Sensor RX
+ */
 SoftwareSerial fserial(2, 3);
 
 FPM finger(&fserial);
-FPM_System_Params params;
+FPMSystemParams params;
+
+/* for convenience */
+#define PRINTF_BUF_SZ   40
+char printfBuf[PRINTF_BUF_SZ];
 
 void setup()
 {
-    Serial.begin(9600);
-    Serial.println("EMPTY DATABASE test");
+    Serial.begin(57600);
     fserial.begin(57600);
+    
+    Serial.println("EMPTY DATABASE example");
 
     if (finger.begin()) {
         finger.readParams(&params);
         Serial.println("Found fingerprint sensor!");
         Serial.print("Capacity: "); Serial.println(params.capacity);
-        Serial.print("Packet length: "); Serial.println(FPM::packet_lengths[params.packet_len]);
-    } else {
+        Serial.print("Packet length: "); Serial.println(FPM::packetLengths[static_cast<uint8_t>(params.packetLen)]);
+    } 
+    else {
         Serial.println("Did not find fingerprint sensor :(");
         while (1) yield();
     }
 }
 
-void loop() {
-    Serial.println("Send any character to empty the database...");
+void loop() 
+{
+    Serial.println("\r\nSend any character to empty the database...");
     while (Serial.available() == 0) yield();
-    empty_database();
+    
+    emptyDatabase();
+    
     while (Serial.read() != -1);
 }
 
-void empty_database(void) {
-    int16_t p = finger.emptyDatabase();
-    if (p == FPM_OK) {
-        Serial.println("Database empty!");
+bool emptyDatabase(void) 
+{
+    FPMStatus status = finger.emptyDatabase();
+    
+    switch (status) 
+    {
+        case FPMStatus::OK:
+            snprintf(printfBuf, PRINTF_BUF_SZ, "Database empty.");
+            Serial.println(printfBuf);
+            break;
+            
+        case FPMStatus::DBCLEARFAIL:
+            snprintf(printfBuf, PRINTF_BUF_SZ, "Could not clear sensor database.");
+            Serial.println(printfBuf);
+            return false;
+            
+        default:
+            snprintf(printfBuf, PRINTF_BUF_SZ, "emptyDatabase(): error 0x%X", static_cast<uint16_t>(status));
+            Serial.println(printfBuf);
+            return false;
     }
-    else if (p == FPM_PACKETRECIEVEERR) {
-        Serial.print("Communication error!");
-    }
-    else if (p == FPM_DBCLEARFAIL) {
-        Serial.println("Could not clear database!");
-    } 
-    else if (p == FPM_TIMEOUT) {
-        Serial.println("Timeout!");
-    } 
-    else if (p == FPM_READ_ERROR) {
-        Serial.println("Got wrong PID or length!");
-    } 
-    else {
-        Serial.println("Unknown error");
-    }
+    
+    return true;
 }

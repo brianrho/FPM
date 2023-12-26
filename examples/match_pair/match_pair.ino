@@ -1,28 +1,36 @@
 #include <SoftwareSerial.h>
-#include <FPM.h>
+#include <fpm.h>
 
-/* Match 2 templates */
+/* Match 2 fingerprints/templates against each other */
 
-/*  pin #2 is IN from sensor (GREEN wire)
-    pin #3 is OUT from arduino  (WHITE/YELLOW wire)
-*/
+/*  pin #2 is Arduino RX <==> Sensor TX
+ *  pin #3 is Arduino TX <==> Sensor RX
+ */
 SoftwareSerial fserial(2, 3);
 
 FPM finger(&fserial);
-FPM_System_Params params;
+FPMSystemParams params;
+
+/* for convenience */
+#define PRINTF_BUF_SZ   60
+char printfBuf[PRINTF_BUF_SZ];
 
 void setup()
 {
-    Serial.begin(9600);
-    Serial.println("PAIR MATCH test");
+    Serial.begin(57600);
     fserial.begin(57600);
+    
+    Serial.println("1:1 MATCH example");
 
-    if (finger.begin()) {
+    if (finger.begin()) 
+    {
         finger.readParams(&params);
         Serial.println("Found fingerprint sensor!");
         Serial.print("Capacity: "); Serial.println(params.capacity);
-        Serial.print("Packet length: "); Serial.println(FPM::packet_lengths[params.packet_len]);
-    } else {
+        Serial.print("Packet length: "); Serial.println(FPM::packetLengths[static_cast<uint8_t>(params.packetLen)]);
+    } 
+    else 
+    {
         Serial.println("Did not find fingerprint sensor :(");
         while (1) yield();
     }
@@ -30,102 +38,125 @@ void setup()
 
 void loop()
 {
-    Serial.println("Enter the template ID # to be matched...");
-    int16_t fid = 0;
-    while (Serial.read() != -1);
-    while (true) {
+    Serial.println("\r\nEnter the template ID # to be matched...");
+    
+    uint16_t fid = 0;
+    
+    while (true) 
+    {
         while (! Serial.available()) yield();
+        
         char c = Serial.read();
         if (! isdigit(c)) break;
+        
         fid *= 10;
         fid += c - '0';
+        
         yield();
-    }
-
-    match_prints(fid);
-}
-
-/* capture a print, load it into slot 1, 
- *  load a second print #fid into the slot 2,
- *  and check if they match
- */
-void match_prints(int16_t fid) {
-    int16_t p = -1;
-
-    /* first get the finger image */
-    Serial.println("Waiting for valid finger");
-    while (p != FPM_OK) {
-        p = finger.getImage();
-        switch (p) {
-            case FPM_OK:
-                Serial.println("Image taken");
-                break;
-            case FPM_NOFINGER:
-                Serial.println(".");
-                break;
-            case FPM_PACKETRECIEVEERR:
-                Serial.println("Communication error");
-                return;
-            default:
-                Serial.println("Unknown error");
-                return;
-        }
-        yield();
-    }
-
-    /* convert it and place in slot 1*/
-    p = finger.image2Tz(1);
-    switch (p) {
-        case FPM_OK:
-            Serial.println("Image converted");
-            break;
-        case FPM_IMAGEMESS:
-            Serial.println("Image too messy");
-            return;
-        case FPM_PACKETRECIEVEERR:
-            Serial.println("Communication error");
-            return;
-        default:
-            Serial.println("Unknown error");
-            return;
-    }
-
-    Serial.println("Remove finger");
-    p = 0;
-    while (p != FPM_NOFINGER) {
-        p = finger.getImage();
-        yield();
-    }
-    Serial.println();
-
-    /* read template into slot 2 */
-    p = finger.loadModel(fid, 2);
-    switch (p) {
-        case FPM_OK:
-            Serial.print("Template "); Serial.print(fid); Serial.println(" loaded.");
-            break;
-        case FPM_PACKETRECIEVEERR:
-            Serial.println("Communication error");
-            return;
-        case FPM_DBREADFAIL:
-            Serial.println("Invalid template");
-            return;
-        default:
-            Serial.print("Unknown error "); Serial.println(p);
-            return;
     }
     
-    uint16_t match_score = 0;
-    p = finger.matchTemplatePair(&match_score);
-    switch (p) {
-        case FPM_OK:
-            Serial.print("Prints matched. Score: "); Serial.println(match_score);
-            break;
-        case FPM_NOMATCH:
-            Serial.println("Prints did not match.");
-            break;
-        default:
-            Serial.println("Unknown error");
-            return;
+    Serial.print("Template ID: "); Serial.println(fid);
+    Serial.println();
+    
+    comparePrints(fid);
+    
+    while (Serial.read() != -1) yield();
+}
+
+bool comparePrints(uint16_t fid) 
+{
+    FPMStatus status;
+    
+    /* Take a snapshot of the input finger */
+    Serial.println("Place a finger.");
+    
+    do {
+        status = finger.getImage();
+        
+        switch (status) 
+        {
+            case FPMStatus::OK:
+                Serial.println("Image taken");
+                break;
+                
+            case FPMStatus::NOFINGER:
+                Serial.println(".");
+                break;
+                
+            default:
+                /* allow retries even when an error happens */
+                snprintf(printfBuf, PRINTF_BUF_SZ, "getImage(): error 0x%X", static_cast<uint16_t>(status));
+                Serial.println(printfBuf);
+                break;
+        }
+        
+        yield();
     }
+    while (status != FPMStatus::OK);
+    
+    /* Extract the fingerprint features into Buffer 1 */
+    status = finger.image2Tz(1);
+
+    switch (status) 
+    {
+        case FPMStatus::OK:
+            Serial.println("Image converted");
+            break;
+            
+        default:
+            snprintf(printfBuf, PRINTF_BUF_SZ, "image2Tz(): error 0x%X", static_cast<uint16_t>(status));
+            Serial.println(printfBuf);
+            return false;
+    }
+    
+    /* Now wait for the finger to be removed */
+    Serial.println("Remove finger.");
+    delay(1000);
+    do {
+        status = finger.getImage();
+        delay(200);
+    }
+    while (status != FPMStatus::NOFINGER);
+    
+    /* read the other template into Buffer 2 */
+    status = finger.loadTemplate(fid, 2);
+    
+    switch (status) 
+    {
+        case FPMStatus::OK:
+            Serial.print("Template "); Serial.print(fid); Serial.println(" loaded");
+            break;
+            
+        case FPMStatus::DBREADFAIL:
+            Serial.println(F("Invalid template or location"));
+            return false;
+            
+        default:
+            snprintf_P(printfBuf, PRINTF_BUF_SZ, PSTR("loadTemplate(%d): error 0x%X"), fid, static_cast<uint16_t>(status));
+            Serial.println(printfBuf);
+            return false;
+    }
+    
+    /* Compare the contents of both Buffers to see if they match */
+    uint16_t score;
+    status = finger.matchTemplatePair(&score);
+    
+    switch (status)
+    {
+        case FPMStatus::OK:
+            snprintf(printfBuf, PRINTF_BUF_SZ, "Both prints are a match! Confidence: %u", score);
+            Serial.println(printfBuf);
+            break;
+            
+        case FPMStatus::NOMATCH:
+            Serial.println("Both prints are NOT a match.");
+            return false;
+            
+        default:
+            snprintf(printfBuf, PRINTF_BUF_SZ, "matchTemplatePair(): error 0x%X", static_cast<uint16_t>(status));
+            Serial.println(printfBuf);
+            return false;
+    }
+    
+    return true;
 }

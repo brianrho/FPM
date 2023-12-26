@@ -1,164 +1,153 @@
 #include <SoftwareSerial.h>
-#include <FPM.h>
+#include <fpm.h>
+
 #include <Ethernet.h>
 #include <EthernetUdp.h>
 
-/* Send a fingerprint image to an Ethernet UDP server in 128-byte chunks.
- * Set the baud rate to 19200 first (with the `set_parameters` example)
- * before trying this. 
- * 19200 is chosen here because it's what worked for [hell77] with an Arduino Uno
- * and Ethernet shield, so you may get different results with an ESP8266/32 with UDP over WiFi, for instance.
+/* Send a fingerprint image to a UDP server over an Ethernet connection.
+ * The image is transferred in chunks -- the size of the chunk in each UDP packet 
+ * is no more than the current packet-length of the sensor.
+ * 
+ * Since writing to network sockets can block and take some time, you may need to lower 
+ * the sensor baud rate to perhaps 19200, in order to avoid losing image data over Serial.
+ * (But this may be unnecessary depending on your network transport and MCU.)
  */
 
-/*  pin #2 is IN from sensor (GREEN wire)
-    pin #3 is OUT from arduino  (WHITE/YELLOW wire)
-*/
+/*  pin #2 is Arduino RX <==> Sensor TX
+ *  pin #3 is Arduino TX <==> Sensor RX
+ */
 SoftwareSerial fserial(2, 3);
 
 FPM finger(&fserial);
-FPM_System_Params params;
+FPMSystemParams params;
 
-/* Ethernet setup, provide your MAC and IP details here */
-byte mac[] = {
-  0xDE, 0xAD, 0xDE, 0xEF, 0xFF, 0xEF
-};
+/* Ethernet setup: provide your MAC and IP details here */
+static const byte mac[] = {0xDE, 0xAD, 0xDE, 0xEF, 0xFF, 0xEF};
 
-IPAddress local_ip(192, 168, 3, 177);
-IPAddress remote_ip(192, 168, 3, 156);
+IPAddress udpServerIp(192, 168, 3, 156);
+unsigned int udpServerPort = 9999;
 
-unsigned int local_port = 8888;
-unsigned int remote_port = 9999;
-EthernetUDP client;
+EthernetUDP udpClient;
+unsigned int localPort = 8888;
+
+/* for convenience */
+#define PRINTF_BUF_SZ   60
+char printfBuf[PRINTF_BUF_SZ];
 
 void setup()
 {
-    Serial.begin(19200);
-    fserial.begin(19200);
-    Serial.println("UDP IMAGE TRANSFER test");
+    Serial.begin(57600);
+    fserial.begin(57600);
+    
+    Serial.println("IMAGE-TO-UDP example");
 
     if (finger.begin()) {
         finger.readParams(&params);
         Serial.println("Found fingerprint sensor!");
         Serial.print("Capacity: "); Serial.println(params.capacity);
-        Serial.print("Packet length: "); Serial.println(FPM::packet_lengths[params.packet_len]);
-    }
+        Serial.print("Packet length: "); Serial.println(FPM::packetLengths[static_cast<uint8_t>(params.packetLen)]);
+    } 
     else {
         Serial.println("Did not find fingerprint sensor :(");
         while (1) yield();
+    }  
+    
+    if (Ethernet.begin(mac) == 0)
+    {
+        Serial.println("Ethernet setup failed.");
+        while (1) yield();
     }
     
-    Ethernet.begin(mac, local_ip);
-    client.begin(local_port);
+    udpClient.begin(localPort);
 }
 
-void loop() {
-    stream_image();
+void loop()
+{
+    imageToUdp();
+
     while (1) yield();
 }
 
-/* set to the current sensor packet length, 128 by default */
-#define TRANSFER_SZ     128
-uint8_t buffer[TRANSFER_SZ];
-
-void stream_image(void) {
-    if (!set_packet_len_128()) {
-        Serial.println("Could not set packet length");
-        return;
-    }
-
-    delay(100);
+uint32_t imageToUdp(void)
+{
+    FPMStatus status;
     
-    int16_t p = -1;
-    Serial.println("Waiting for a finger...");
-    while (p != FPM_OK) {
-        p = finger.getImage();
-        switch (p) {
-            case FPM_OK:
-                Serial.println("Image taken");
+    /* Take a snapshot of the finger */
+    Serial.println("\r\nPlace a finger.");
+    
+    do {
+        status = finger.getImage();
+        
+        switch (status) 
+        {
+            case FPMStatus::OK:
+                Serial.println("Image taken.");
                 break;
-            case FPM_NOFINGER:
+                
+            case FPMStatus::NOFINGER:
+                Serial.println(".");
                 break;
-            case FPM_PACKETRECIEVEERR:
-                Serial.println("Communication error");
-                break;
-            case FPM_IMAGEFAIL:
-                Serial.println("Imaging error");
-                break;
+                
             default:
-                Serial.println("Unknown error");
+                /* allow retries even when an error happens */
+                snprintf(printfBuf, PRINTF_BUF_SZ, "getImage(): error 0x%X", static_cast<uint16_t>(status));
+                Serial.println(printfBuf);
                 break;
         }
+        
         yield();
     }
-
-    p = finger.downImage();
-    switch (p) {
-        case FPM_OK:
+    while (status != FPMStatus::OK);
+    
+    /* Initiate the image transfer */
+    status = finger.downloadImage();
+    
+    switch (status) 
+    {
+        case FPMStatus::OK:
             Serial.println("Starting image stream...");
             break;
-        case FPM_PACKETRECIEVEERR:
-            Serial.println("Communication error");
-            return;
-        case FPM_UPLOADFAIL:
-            Serial.println("Cannot transfer the image");
-            return;
+            
+        default:
+            snprintf(printfBuf, PRINTF_BUF_SZ, "downloadImage(): error 0x%X", static_cast<uint16_t>(status));
+            Serial.println(printfBuf);
+            return 0;
     }
     
-    /* flag to know when we're done */
-    bool read_finished;
-    /* indicate the max size to read, and also returns how much was actually read */
-	uint16_t readlen = TRANSFER_SZ;
-    uint16_t count = 0;
+    uint32_t totalRead = 0;
+    uint16_t readLen = 0;
+    
+    /* Now, the sensor will send us the image from its image buffer, one packet at a time. */
+    bool readComplete = false;
 
-    while (true) {
-        /* start composing packet to remote host */
-        client.beginPacket(remote_ip, remote_port);
+    while (!readComplete) 
+    {
+        /* Start composing a packet to the remote server */
+        udpClient.beginPacket(udpServerIp, udpServerPort);
         
-        bool ret = finger.readRaw(FPM_OUTPUT_TO_BUFFER, buffer, &read_finished, &readlen);
-        if (ret) {
-            count++;
-            /* we now have a complete packet, so send it */
-			client.write(buffer, readlen);
-            client.endPacket();
-            
-            /* indicate the length to be read next time like before */
-			readlen = TRANSFER_SZ;
-            if (read_finished)
-                break;
+        bool ret = finger.readDataPacket(NULL, &udpClient, &readLen, &readComplete);
+        
+        if (!ret)
+        {
+            snprintf_P(printfBuf, PRINTF_BUF_SZ, PSTR("readDataPacket(): failed after reading %u bytes"), totalRead);
+            Serial.println(printfBuf);
+            return 0;
         }
-        else {
-            Serial.print("\r\nError receiving packet ");
-            Serial.println(count);
-            return;
+        
+        /* Complete the packet and send it */
+        if (!udpClient.endPacket())
+        {
+            snprintf_P(printfBuf, PRINTF_BUF_SZ, PSTR("imageToUdp(): failed to send packet, count = %u bytes"), totalRead);
+            Serial.println(printfBuf);
+            return 0;
         }
+        
+        totalRead += readLen;
+        
         yield();
     }
 
     Serial.println();
-    Serial.print(count * FPM::packet_lengths[params.packet_len]); Serial.println(" bytes read.");
-    Serial.println("Image stream complete.");
-}
-
-
-/* set packet length to 128 bytes,
-   no need to call this for R308 sensor */
-bool set_packet_len_128(void) {
-    uint8_t param = FPM_SETPARAM_PACKET_LEN; // Example
-    uint8_t value = FPM_PLEN_128;
-    int16_t p = finger.setParam(param, value);
-    switch (p) {
-        case FPM_OK:
-            Serial.println("Packet length set to 128 bytes");
-            break;
-        case FPM_PACKETRECIEVEERR:
-            Serial.println("Comms error");
-            break;
-        case FPM_INVALIDREG:
-            Serial.println("Invalid settings!");
-            break;
-        default:
-            Serial.println("Unknown error");
-    }
-
-    return (p == FPM_OK);
+    Serial.print(totalRead); Serial.println(" bytes transferred.");
+    return totalRead;
 }

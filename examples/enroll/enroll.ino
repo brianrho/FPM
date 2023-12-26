@@ -1,12 +1,29 @@
-#include <SoftwareSerial.h>
-#include <fpm.h>
-
 /* Enroll fingerprints */
 
+#if defined(ARDUINO_ARCH_ESP32)
+#include <HardwareSerial.h>
+#else
+#include <SoftwareSerial.h>
+#endif
+
+#include <fpm.h>
+ 
+/* Uncomment this definition only if your sensor supports the LED control commands (FPM_LEDON and FPM_LEDOFF)
+ * and you want to control the LED yourself. */
+/* #define FPM_LED_CONTROL_ENABLED */
+
+#if defined(ARDUINO_ARCH_ESP32)
+/*  For ESP32 only, use Hardware UART1:
+    GPIO-25 is Arduino RX <==> Sensor TX
+    GPIO-32 is Arduino TX <==> Sensor RX
+*/
+HardwareSerial fserial(1);
+#else
 /*  pin #2 is Arduino RX <==> Sensor TX
  *  pin #3 is Arduino TX <==> Sensor RX
  */
 SoftwareSerial fserial(2, 3);
+#endif
 
 FPM finger(&fserial);
 FPMSystemParams params;
@@ -18,8 +35,13 @@ char printfBuf[PRINTF_BUF_SZ];
 void setup()
 {
     Serial.begin(57600);
-    fserial.begin(57600);
     
+#if defined(ARDUINO_ARCH_ESP32)
+    fserial.begin(57600, SERIAL_8N1, 25, 32);
+#else
+    fserial.begin(57600);
+#endif
+
     Serial.println("ENROLL example");
 
     if (finger.begin()) {
@@ -88,6 +110,10 @@ bool enrollFinger(int16_t fid)
     FPMStatus status;
     const int NUM_SNAPSHOTS = 2;
     
+#if defined(FPM_LED_CONTROL_ENABLED)
+    finger.ledOn();
+#endif
+
     /* Take snapshots of the finger,
      * and extract the fingerprint features from each image */
     for (int i = 0; i < NUM_SNAPSHOTS; i++)
@@ -95,7 +121,11 @@ bool enrollFinger(int16_t fid)
         Serial.println(i == 0 ? "Place a finger" : "Place same finger again");
         
         do {
+#if defined(FPM_LED_CONTROL_ENABLED)
+            status = finger.getImageOnly();
+#else
             status = finger.getImage();
+#endif
             
             switch (status) 
             {
@@ -135,13 +165,21 @@ bool enrollFinger(int16_t fid)
         Serial.println("Remove finger");
         delay(1000);
         do {
+#if defined(FPM_LED_CONTROL_ENABLED)
+            status = finger.getImageOnly();
+#else
             status = finger.getImage();
+#endif
             delay(200);
         }
         while (status != FPMStatus::NOFINGER);
         
     }
     
+#if defined(FPM_LED_CONTROL_ENABLED)
+    finger.ledOff();
+#endif
+
     /* Images have been taken and converted into features a.k.a character files.
      * Now, need to create a model/template from these features and store it. */
      

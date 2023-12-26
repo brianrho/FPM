@@ -1,126 +1,123 @@
 #include <SoftwareSerial.h>
-#include <FPM.h>
+#include <fpm.h>
 
-/* Send fingerprint image to PC in 4-bit BMP format */
+/* Send a fingerprint image to a PC.
+ *
+ * This example should be executed alongside the Python script in the extras folder,
+ * which will run on the PC to receive and assemble the fingerprint image.
+ */
 
-/*  pin #2 is IN from sensor (GREEN wire)
-    pin #3 is OUT from arduino  (WHITE/YELLOW wire)
-*/
+/*  pin #2 is Arduino RX <==> Sensor TX
+ *  pin #3 is Arduino TX <==> Sensor RX
+ */
 SoftwareSerial fserial(2, 3);
 
 FPM finger(&fserial);
-FPM_System_Params params;
+FPMSystemParams params;
+
+/* for convenience */
+#define PRINTF_BUF_SZ   60
+char printfBuf[PRINTF_BUF_SZ];
 
 void setup()
 {
     Serial.begin(57600);
-    Serial.println("SEND IMAGE TO PC test");
     fserial.begin(57600);
+    
+    Serial.println("IMAGE-TO-PC example");
 
     if (finger.begin()) {
         finger.readParams(&params);
         Serial.println("Found fingerprint sensor!");
         Serial.print("Capacity: "); Serial.println(params.capacity);
-        Serial.print("Packet length: "); Serial.println(FPM::packet_lengths[params.packet_len]);
-    }
+        Serial.print("Packet length: "); Serial.println(FPM::packetLengths[static_cast<uint8_t>(params.packetLen)]);
+    } 
     else {
         Serial.println("Did not find fingerprint sensor :(");
         while (1) yield();
-    }
+    }    
 }
 
-void loop() {
-    stream_image();
+void loop()
+{
+    imageToPc();
+
     while (1) yield();
 }
 
-void stream_image(void) {
-    if (!set_packet_len_128()) {
-        Serial.println("Could not set packet length");
-        return;
-    }
-
-    delay(100);
+uint32_t imageToPc(void)
+{
+    FPMStatus status;
     
-    int16_t p = -1;
-    Serial.println("Waiting for a finger...");
-    while (p != FPM_OK) {
-        p = finger.getImage();
-        switch (p) {
-            case FPM_OK:
-                Serial.println("Image taken");
+    /* Take a snapshot of the finger */
+    Serial.println("\r\nPlace a finger.");
+    
+    do {
+        status = finger.getImage();
+        
+        switch (status) 
+        {
+            case FPMStatus::OK:
+                Serial.println("Image taken.");
                 break;
-            case FPM_NOFINGER:
+                
+            case FPMStatus::NOFINGER:
+                Serial.println(".");
                 break;
-            case FPM_PACKETRECIEVEERR:
-                Serial.println("Communication error");
-                break;
-            case FPM_IMAGEFAIL:
-                Serial.println("Imaging error");
-                break;
+                
             default:
-                Serial.println("Unknown error");
+                /* allow retries even when an error happens */
+                snprintf(printfBuf, PRINTF_BUF_SZ, "getImage(): error 0x%X", static_cast<uint16_t>(status));
+                Serial.println(printfBuf);
                 break;
         }
+        
         yield();
     }
-
-    p = finger.downImage();
-    switch (p) {
-        case FPM_OK:
+    while (status != FPMStatus::OK);
+    
+    /* Initiate the image transfer */
+    status = finger.downloadImage();
+    
+    switch (status) 
+    {
+        case FPMStatus::OK:
             Serial.println("Starting image stream...");
             break;
-        case FPM_PACKETRECIEVEERR:
-            Serial.println("Communication error");
-            return;
-        case FPM_UPLOADFAIL:
-            Serial.println("Cannot transfer the image");
-            return;
+            
+        default:
+            snprintf(printfBuf, PRINTF_BUF_SZ, "downloadImage(): error 0x%X", static_cast<uint16_t>(status));
+            Serial.println(printfBuf);
+            return 0;
     }
 
-    /* header to indicate start of image stream to PC */
-    Serial.write('\t');
-    bool read_finished;
-    int16_t count = 0;
+    /* Send some arbitrary signature to the PC, to indicate the start of the image stream */
+    Serial.write(0xAA);
+    
+    uint32_t totalRead = 0;
+    uint16_t readLen = 0;
+    
+    /* Now, the sensor will send us the image from its image buffer, one packet at a time.
+     * We will stream it directly to Serial. */
+    bool readComplete = false;
 
-    while (true) {
-        bool ret = finger.readRaw(FPM_OUTPUT_TO_STREAM, &Serial, &read_finished);
-        if (ret) {
-            count++;
-            if (read_finished)
-                break;
+    while (!readComplete) 
+    {
+        bool ret = finger.readDataPacket(NULL, &Serial, &readLen, &readComplete);
+        
+        if (!ret)
+        {
+            snprintf_P(printfBuf, PRINTF_BUF_SZ, PSTR("readDataPacket(): failed after reading %u bytes"), totalRead);
+            Serial.println(printfBuf);
+            return 0;
         }
-        else {
-            Serial.print("\r\nError receiving packet ");
-            Serial.println(count);
-            return;
-        }
+        
+        totalRead += readLen;
+        
         yield();
     }
 
     Serial.println();
-    Serial.print(count * FPM::packet_lengths[params.packet_len]); Serial.println(" bytes read.");
-    Serial.println("Image stream complete.");
-}
-
-/* no need to call this for R308 */
-bool set_packet_len_128(void) {
-    uint8_t param = FPM_SETPARAM_PACKET_LEN;
-    uint8_t value = FPM_PLEN_128;
-    int16_t p = finger.setParam(param, value);
-    switch (p) {
-        case FPM_OK:
-            Serial.println("Packet length set to 128 bytes");
-            break;
-        case FPM_PACKETRECIEVEERR:
-            Serial.println("Comms error");
-            break;
-        case FPM_INVALIDREG:
-            Serial.println("Invalid settings!");
-            break;
-        default:
-            Serial.println("Unknown error");
-    }
-
-    return (p == FPM_OK);
+    Serial.print(totalRead); Serial.println(" bytes transferred.");
+    return totalRead;
 }
