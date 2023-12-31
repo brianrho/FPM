@@ -1,7 +1,7 @@
 /*  Read a fingerprint image from the sensor and render it on a TFT display.
 
     This example depends on the TFT_eSPI library. 
-    It was tested with an ESP32-WROOM + FPM10 sensor + 2.8" 240x320 TFT ST7789 display (using SPI).
+    It was tested with an ESP32-WROOM + FPM10 sensor + 2.8" 240x320 ST7789 TFT display (using SPI).
 */
 
 #if defined(ARDUINO_ARCH_ESP32)
@@ -48,7 +48,7 @@ char printfBuf[PRINTF_BUF_SZ];
     This is useful when the TFT display is not large enough to hold the entire image
     (e.g. 240x320 TFT cannot display 256x288 fingerprint).
 
-    To function properly, div must be a factor of both IMAGE_WIDTH and IMAGE_HEIGHT.
+    To function properly, div must be a factor of both IMAGE_WIDTH*mul and IMAGE_HEIGHT*mul.
 */
 #define IMAGE_SCALING_MULT  3
 #define IMAGE_SCALING_DIV   4
@@ -57,15 +57,15 @@ char printfBuf[PRINTF_BUF_SZ];
 const uint16_t BG_COLOUR = tft.color565(0, 25, 0);
 
 /*  Define a special kind of Stream which writes to the TFT directly,
-    as each chunk of image data is read from the sensor. */
+    as each chunk/packet of image data is read from the sensor. */
     
 class TftStream : public Stream
 {
     public:
 
         TftStream(bool raw) : startx(0), starty(0),
-                              canvas_width(0), canvas_height(0), 
-                              pixelCount(0), raw_mode(raw)
+                              canvasWidth(0), canvasHeight(0), 
+                              pixelCount(0), rawMode(raw)
         {
 
         }
@@ -73,28 +73,28 @@ class TftStream : public Stream
         void resetCanvas(void)
         {
             /* Clear the existing canvas, if any */
-            if (canvas_width != 0 && canvas_height != 0)
+            if (canvasWidth != 0 && canvasHeight != 0)
             {
-                tft.fillRect(startx, starty, canvas_width, canvas_height, BG_COLOUR);
+                tft.fillRect(startx, starty, canvasWidth, canvasHeight, BG_COLOUR);
             }
 
             /* Setup the bounds of the canvas. Make sure to center the image. */
-            canvas_width = IMAGE_WIDTH * IMAGE_SCALING_MULT / IMAGE_SCALING_DIV;
-            canvas_height = IMAGE_HEIGHT * IMAGE_SCALING_MULT / IMAGE_SCALING_DIV;
+            canvasWidth = IMAGE_WIDTH * IMAGE_SCALING_MULT / IMAGE_SCALING_DIV;
+            canvasHeight = IMAGE_HEIGHT * IMAGE_SCALING_MULT / IMAGE_SCALING_DIV;
             
-            startx = (TFT_WIDTH/2) - canvas_width/2;
-            starty = (TFT_HEIGHT/2) - canvas_height/2;
+            startx = (TFT_WIDTH / 2) - (canvasWidth / 2);
+            starty = (TFT_HEIGHT / 2) - (canvasHeight / 2);
 
             pixelCount = 0;
 
-            tft.fillRect(startx, starty, canvas_width, canvas_height, BG_COLOUR);
-            tft.setAddrWindow(startx, starty, canvas_width, canvas_height);
+            tft.fillRect(startx, starty, canvasWidth, canvasHeight, BG_COLOUR);
+            tft.setAddrWindow(startx, starty, canvasWidth, canvasHeight);
         }
 
         uint16_t bmpToTftColour(uint8_t bmp_colour)
         {
             /* In raw mode, R, G, B have equal components, as in the original 8-bit grayscale. */
-            if (raw_mode)
+            if (rawMode)
             {
                 return tft.color565(bmp_colour, bmp_colour, bmp_colour);
             }
@@ -118,12 +118,16 @@ class TftStream : public Stream
         {            
             for (int i = 0; i < chunkLen; i++)
             {
-                /*  Convert the colour in grayscale to RGB565.
-                    R, G, B have equal components in 8-bit grayscale. */
-
+                /*  Convert the colour in grayscale to RGB565. */
                 uint16_t colour = bmpToTftColour(chunk[i]);
 
-                /* According to the datasheet, the same colour is used for pairs of adjacent pixels. */
+                /* According to the datasheets, each received byte is a lossily-compressed value,
+                 * holding part of the colour information for 2 adjacent pixels in the same row.
+                 * i.e. Upper nibble = Upper nibble of Pixel X, Lower nibble = Lower nibble of Pixel X + 1,
+                 * where X must be even in the range [0, IMAGE_WIDTH).
+
+                 * So, for simplicity, assume that both pixels were originally close enough in colour,
+                 * to now be assigned the same colour.
 
                 /* Push Pixel X, after applying scaling. */
                 uint16_t row = pixelCount / IMAGE_WIDTH;
@@ -160,10 +164,10 @@ class TftStream : public Stream
 
         int startx;
         int starty;
-        uint16_t canvas_width;
-        uint16_t canvas_height;
+        uint16_t canvasWidth;
+        uint16_t canvasHeight;
         uint32_t pixelCount;
-        bool raw_mode;
+        bool rawMode;
 };
 
 /*  Create the TFT stream object.
